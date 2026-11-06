@@ -130,7 +130,7 @@ $('presetKITTI').addEventListener('click', () => {
     depthUrl: '/assets/presets/kitti_depth.png',
     gtUrl: '/assets/presets/kitti_gt.png',
     profile: 'KITTI outdoor · 80 m',
-    units: 'metres',
+    units: 'kitti_256',
     inputType: 'full_resolution_sparse',
     mode: 'Classical',
     method: 'joint_bilateral',
@@ -152,6 +152,93 @@ $('presetMid').addEventListener('click', () => {
     scale: 4
   });
 });
+
+// 24-Scene Interactive Benchmark Gallery Logic
+let galleryData = [];
+
+async function initGallery() {
+  const grid = $('galleryGrid');
+  if (!grid) return;
+  try {
+    const res = await fetch('/assets/presets/gallery_manifest.json');
+    if (!res.ok) throw new Error('Could not load gallery manifest');
+    galleryData = await res.json();
+    renderGallery('all');
+  } catch (err) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:24px;">Unable to load benchmark gallery: ${err.message}</div>`;
+  }
+}
+
+function renderGallery(filterCategory) {
+  const grid = $('galleryGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  
+  const items = filterCategory === 'all' 
+    ? galleryData 
+    : galleryData.filter(item => item.category === filterCategory);
+
+  items.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'gallery-card';
+    card.title = `Click to reconstruct: ${item.title}`;
+    card.innerHTML = `
+      <div class="gallery-thumb-wrap">
+        <img src="${item.thumbUrl}" alt="${item.title}" loading="lazy">
+        <span class="gallery-badge ${item.badgeClass}">${item.badge}</span>
+      </div>
+      <div class="gallery-card-body">
+        <div class="gallery-scene-title" title="${item.title}">${item.title}</div>
+        <div class="gallery-meta-tags">
+          <span>${item.dataset}</span>
+          <span>${item.resolution}</span>
+          <span>${item.range}</span>
+        </div>
+        <button class="gallery-run-btn" data-id="${item.id}">
+          <span>⚡ Run Reconstruction</span>
+          <span>↗</span>
+        </button>
+      </div>
+    `;
+
+    card.addEventListener('click', () => {
+      loadPreset(item.id, {
+        label: `${item.title} (${item.dataset})`,
+        rgbUrl: item.rgbUrl,
+        depthUrl: item.depthUrl,
+        gtUrl: item.gtUrl,
+        profile: item.profile,
+        units: item.units,
+        inputType: item.inputType,
+        mode: item.mode,
+        method: item.method,
+        scale: item.scale
+      });
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+// Category filter buttons
+document.querySelectorAll('#galleryFilters .filter-pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#galleryFilters .filter-pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderGallery(btn.dataset.category);
+  });
+});
+
+// Hero showcase specimen click
+const heroShowcase = $('heroShowcase');
+if (heroShowcase) {
+  heroShowcase.addEventListener('click', () => {
+    $('presetNYU').click();
+  });
+}
+
+// Initialize gallery on load
+initGallery();
 
 // View mode tabs (Grid vs Split Slider vs 3D)
 $('tabGrid').addEventListener('click', () => switchView('grid'));
@@ -254,6 +341,7 @@ $('runBtn').addEventListener('click', async () => {
     if (!$('view3D').hidden) {
       initOrUpdate3D();
     }
+    renderEdgeOverlay();
     toast('Depth reconstruction completed successfully.');
   } catch (e) {
     toast(e.message);
@@ -263,6 +351,53 @@ $('runBtn').addEventListener('click', async () => {
     btn.innerHTML = '<span>Run reconstruction</span><span>↗</span>';
   }
 });
+
+// Edge Discontinuity High-Contrast Overlay
+function renderEdgeOverlay() {
+  const checkbox = $('toggleEdgeOverlay');
+  const canvas = $('outputEdgeCanvas');
+  if (!checkbox || !canvas) return;
+  if (!result || !result.boundary || !checkbox.checked) {
+    canvas.hidden = true;
+    return;
+  }
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    canvas.width = img.naturalWidth || 640;
+    canvas.height = img.naturalHeight || 480;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const off = document.createElement('canvas');
+    off.width = canvas.width;
+    off.height = canvas.height;
+    const octx = off.getContext('2d');
+    octx.drawImage(img, 0, 0);
+    const idata = octx.getImageData(0, 0, off.width, off.height);
+    const d = idata.data;
+
+    const outData = ctx.createImageData(canvas.width, canvas.height);
+    const outD = outData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const v = d[i];
+      if (v > 30) {
+        // High-contrast fluorescent cyan edge glow (#73e0dc)
+        outD[i] = 115;
+        outD[i + 1] = 224;
+        outD[i + 2] = 220;
+        outD[i + 3] = Math.min(255, v * 2);
+      } else {
+        outD[i + 3] = 0;
+      }
+    }
+    ctx.putImageData(outData, 0, 0);
+    canvas.hidden = false;
+  };
+  img.src = result.boundary;
+}
+
+$('toggleEdgeOverlay').addEventListener('change', renderEdgeOverlay);
 
 // Interactive Split-Comparison Slider Logic
 const compareContainer = $('compareContainer');

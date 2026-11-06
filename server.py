@@ -21,6 +21,12 @@ app.mount("/assets", StaticFiles(directory=ROOT/"web"), name="assets")
 @app.get("/")
 def home(): return FileResponse(ROOT/"web"/"index.html")
 
+@app.get("/favicon.ico")
+def favicon():
+    fav = ROOT/"web"/"favicon.ico"
+    if fav.is_file(): return FileResponse(fav)
+    return FileResponse(ROOT/"web"/"index.html")
+
 @app.get("/api/health")
 def health():
     return {"status":"ok", "model_trained":Path(CHECKPOINT).is_file(), "checkpoint":Path(CHECKPOINT).name if Path(CHECKPOINT).is_file() else None}
@@ -75,9 +81,13 @@ async def api_reconstruct(
     if depth.shape[0]>h or depth.shape[1]>w: raise HTTPException(400,"Depth dimensions cannot exceed RGB dimensions")
     profiles={"NYU indoor · 10 m":(0.1,10.0),"KITTI outdoor · 80 m":(0.1,80.0)}
     if depth_profile not in profiles: raise HTTPException(400,"Select a supported depth profile")
-    if depth_units not in ("metres","millimetres"): raise HTTPException(400,"Depth units must be metres or millimetres")
+    if depth_units not in ("metres","millimetres","kitti_256"): raise HTTPException(400,"Depth units must be metres, millimetres, or kitti_256")
     lo,hi=profiles[depth_profile]
     if depth_units=="millimetres": depth=depth/1000.0
+    elif depth_units=="kitti_256": depth=depth/256.0
+    elif depth.max() > hi:
+        if depth.max() / 256.0 <= hi * 1.5: depth = depth / 256.0
+        elif depth.max() / 1000.0 <= hi * 1.5: depth = depth / 1000.0
     try:
         r=reconstruct(rgb,depth,scale,method,CHECKPOINT,mode,alpha,interpolation,lo,hi,True,True,True,depth_input_type)
     except ValueError as exc: raise HTTPException(400,str(exc))
@@ -105,6 +115,10 @@ async def api_reconstruct(
         if len(gb)>15*1024*1024: raise HTTPException(413,"Ground-truth file must be under 15 MB")
         gt=decode_depth(gb,gt_file.filename)
         if depth_units=="millimetres": gt=gt/1000.0
+        elif depth_units=="kitti_256": gt=gt/256.0
+        elif gt.max() > hi:
+            if gt.max() / 256.0 <= hi * 1.5: gt = gt / 256.0
+            elif gt.max() / 1000.0 <= hi * 1.5: gt = gt / 1000.0
         if gt.shape!=(h,w): raise HTTPException(400,"Ground truth must match RGB dimensions exactly")
         payload["metrics"]=compute_metrics(output_m,gt,valid_mask=r["output_valid"],min_depth=lo,max_depth=hi)
         err=np.zeros_like(output_m,np.float32); good=np.isfinite(gt)&(gt>=lo)&(gt<=hi)&(gt>0)&r["output_valid"]
