@@ -277,6 +277,7 @@ $('runBtn').addEventListener('click', async () => {
   fd.append('depth_profile', $('depthProfile').value);
   fd.append('depth_units', $('depthUnits').value);
   fd.append('depth_input_type', $('depthInputType').value);
+  fd.append('colormap', $('colormapSelect') ? $('colormapSelect').value : 'turbo');
   if ($('gtInput').files[0]) fd.append('gt_file', $('gtInput').files[0]);
 
   try {
@@ -293,6 +294,15 @@ $('runBtn').addEventListener('click', async () => {
     $('boundaryImg').src = data.boundary;
     $('outputImg').src = data.output;
     
+    // Set Executive Tri-View Comparison cards
+    if ($('rgbPreview') && $('rgbPreview').src) {
+      $('triviewRgb').src = $('rgbPreview').src;
+    } else if ($('rgbInput').files[0]) {
+      $('triviewRgb').src = URL.createObjectURL($('rgbInput').files[0]);
+    }
+    $('triviewDepth').src = data.input_depth || data.interpolation;
+    $('triviewProposed').src = data.output;
+
     // Set split-slider images
     $('sliderImgBefore').src = data.interpolation;
     $('sliderImgAfter').src = data.output;
@@ -356,9 +366,11 @@ $('runBtn').addEventListener('click', async () => {
 function renderEdgeOverlay() {
   const checkbox = $('toggleEdgeOverlay');
   const canvas = $('outputEdgeCanvas');
+  const tCanvas = $('triviewEdgeCanvas');
   if (!checkbox || !canvas) return;
   if (!result || !result.boundary || !checkbox.checked) {
     canvas.hidden = true;
+    if (tCanvas) tCanvas.hidden = true;
     return;
   }
   const img = new Image();
@@ -393,11 +405,39 @@ function renderEdgeOverlay() {
     }
     ctx.putImageData(outData, 0, 0);
     canvas.hidden = false;
+
+    if (tCanvas) {
+      tCanvas.width = canvas.width;
+      tCanvas.height = canvas.height;
+      const tCtx = tCanvas.getContext('2d');
+      tCtx.clearRect(0, 0, tCanvas.width, tCanvas.height);
+      tCtx.putImageData(outData, 0, 0);
+      tCanvas.hidden = false;
+    }
   };
   img.src = result.boundary;
 }
 
 $('toggleEdgeOverlay').addEventListener('change', renderEdgeOverlay);
+
+if ($('colormapSetting')) {
+  $('colormapSetting').addEventListener('change', () => {
+    if ($('colormapSelect')) $('colormapSelect').value = $('colormapSetting').value;
+    if ($('rgbInput').files[0] && $('depthInput').files[0] && $('results') && !$('results').hidden) {
+      $('runBtn').click();
+    }
+  });
+}
+
+if ($('colormapSelect')) {
+  $('colormapSelect').addEventListener('change', () => {
+    if ($('colormapSetting')) $('colormapSetting').value = $('colormapSelect').value;
+    if ($('rgbInput').files[0] && $('depthInput').files[0]) {
+      toast(`Switching depth visualization to ${$('colormapSelect').selectedOptions[0].text}...`);
+      $('runBtn').click();
+    }
+  });
+}
 
 // Interactive Split-Comparison Slider Logic
 const compareContainer = $('compareContainer');
@@ -578,6 +618,14 @@ $('downloadOutput').onclick = () => {
   if (!result) return;
   fetch(result.output_png).then(r => r.blob()).then(b => downloadBlob(b, 'depthlab_refined_uint16.png'));
 };
+
+if ($('downloadColorPreview')) {
+  $('downloadColorPreview').onclick = () => {
+    if (!result) return;
+    const src = result.colormap_png || result.output;
+    fetch(src).then(r => r.blob()).then(b => downloadBlob(b, `depthlab_preview_${result.colormap || 'turbo'}.png`));
+  };
+}
 
 $('downloadNpy').onclick = () => {
   if (!result) return;

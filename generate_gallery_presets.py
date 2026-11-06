@@ -1,4 +1,4 @@
-"""Generate 24 rich gallery scenes with RGB, depth, GT, and dual-split thumbnails."""
+"""Generate 50 rich gallery benchmark scenes with RGB, depth, GT, and dual-split thumbnails."""
 import os, json
 from pathlib import Path
 import cv2
@@ -38,27 +38,26 @@ def main():
     manifest = []
     
     # -------------------------------------------------------------
-    # 1. 10 Curated NYU Indoor Scenes
+    # 1. 25 Curated NYU Indoor Scenes
     # -------------------------------------------------------------
-    nyu_scenes = [
-        ("nyu_01", "Living Room Lounge", "nyu_0003.npy"),
-        ("nyu_02", "Kitchen Countertops", "nyu_0016.npy"),
-        ("nyu_03", "Bedroom & Wardrobe", "nyu_0019.npy"),
-        ("nyu_04", "Home Office Desk", "nyu_0052.npy"),
-        ("nyu_05", "Bookshelf Study Nook", "nyu_0054.npy"),
-        ("nyu_06", "Bathroom Vanity", "nyu_0058.npy"),
-        ("nyu_07", "Dining Room Setting", "nyu_0073.npy"),
-        ("nyu_08", "Classroom Auditorium", "nyu_0084.npy"),
-        ("nyu_09", "Cafe Lounge Seating", "nyu_0089.npy"),
-        ("nyu_10", "Modern Kitchen Island", "nyu_0099.npy"),
+    nyu_files = sorted([f.name for f in Path("data/processed/nyu/val/rgb").glob("*.npy")])[:25]
+    nyu_titles = [
+        "Living Room Lounge", "Kitchen Countertops", "Bedroom & Wardrobe", "Home Office Desk",
+        "Bookshelf Study Nook", "Bathroom Vanity", "Dining Room Setting", "Classroom Auditorium",
+        "Cafe Lounge Seating", "Modern Kitchen Island", "Library Book Stacks", "Conference Meeting Hall",
+        "Study Bedroom Corner", "Computer Workstation", "Reception Counter", "Hallway Corridor",
+        "Basement Utility Room", "Studio Apartment Corner", "Dining Table Geometry", "Kitchen Storage Cabinets",
+        "Living Room Sofa View", "Office Filing Cabinet", "Restroom Sink & Mirror", "Master Bedroom Suite",
+        "Foyer & Entry Hallway"
     ]
     
-    print("Generating 10 NYU Indoor Scenes...")
-    for sid, title, fname in nyu_scenes:
+    print(f"Generating {len(nyu_files)} NYU Indoor Scenes...")
+    for idx, fname in enumerate(nyu_files):
+        sid = f"nyu_{idx+1:02d}"
+        title = nyu_titles[idx] if idx < len(nyu_titles) else f"NYU Indoor Scene {idx+1}"
         rgb_p = Path("data/processed/nyu/val/rgb") / fname
         gt_p = Path("data/processed/nyu/val/gt") / fname
         if not (rgb_p.exists() and gt_p.exists()):
-            print(f"Skipping {fname}, file missing")
             continue
         
         rgb = np.load(rgb_p)
@@ -73,7 +72,6 @@ def main():
         low = num / np.maximum(den, 1e-6)
         low[den < 0.75] = 0.0
         
-        # Save files
         Image.fromarray(rgb).save(presets_dir / f"{sid}_rgb.png")
         Image.fromarray((np.clip(low * 1000.0, 0, 65535)).astype(np.uint16)).save(presets_dir / f"{sid}_depth.png")
         Image.fromarray((np.clip(gt * 1000.0, 0, 65535)).astype(np.uint16)).save(presets_dir / f"{sid}_gt.png")
@@ -101,28 +99,27 @@ def main():
             "gtUrl": f"/assets/presets/{sid}_gt.png",
             "thumbUrl": f"/assets/presets/{sid}_thumb.png"
         })
-    
+
     # -------------------------------------------------------------
-    # 2. 8 Curated KITTI Automotive LiDAR Scenes
+    # 2. 15 Curated KITTI Outdoor LiDAR Scenes
     # -------------------------------------------------------------
-    kitti_scenes = [
-        ("kitti_01", "Urban Avenue & Vehicles", "kitti_000000.npy"),
-        ("kitti_02", "Highway Cruising Horizon", "kitti_000001.npy"),
-        ("kitti_03", "Suburban Roadway & Trees", "kitti_000002.npy"),
-        ("kitti_04", "Following Car Silhouette", "kitti_000003.npy"),
-        ("kitti_05", "City Center Crossroad", "kitti_000004.npy"),
-        ("kitti_06", "Residential Boulevard", "kitti_000005.npy"),
-        ("kitti_07", "Cyclist & Sidewalk Zone", "kitti_000006.npy"),
-        ("kitti_08", "Multi-Lane Thoroughfare", "kitti_000007.npy"),
+    kitti_files = sorted([f.name for f in Path("data/processed/kitti/val/rgb").glob("*.npy")])[:15]
+    kitti_titles = [
+        "Urban Avenue & Vehicles", "Highway Cruising Horizon", "Suburban Roadway & Trees",
+        "Following Car Silhouette", "City Center Crossroad", "Residential Boulevard",
+        "Cyclist & Sidewalk Zone", "Multi-Lane Thoroughfare", "Expressway Overpass",
+        "Parked Vehicle Row", "Tree-Lined Country Road", "Commercial Storefront St.",
+        "Intersection Turning Bay", "Suburban Street Crossing", "Two-Way Traffic Corridor"
     ]
     
-    print("Generating 8 KITTI Outdoor LiDAR Scenes...")
-    for sid, title, fname in kitti_scenes:
+    print(f"Generating {len(kitti_files)} KITTI Outdoor LiDAR Scenes...")
+    for idx, fname in enumerate(kitti_files):
+        sid = f"kitti_{idx+1:02d}"
+        title = kitti_titles[idx] if idx < len(kitti_titles) else f"KITTI Scene {idx+1}"
         rgb_p = Path("data/processed/kitti/val/rgb") / fname
         sp_p = Path("data/processed/kitti/val/sparse") / fname
         gt_p = Path("data/processed/kitti/val/gt") / fname
         if not (rgb_p.exists() and sp_p.exists() and gt_p.exists()):
-            print(f"Skipping {fname}, file missing")
             continue
         
         rgb = np.load(rgb_p)
@@ -159,26 +156,25 @@ def main():
         })
 
     # -------------------------------------------------------------
-    # 3. 6 Curated Middlebury Stereo Geometric Scenes
+    # 3. 10 Curated Middlebury Stereo Geometric Scenes
     # -------------------------------------------------------------
-    mid_scenes = [
-        ("mid_01", "Artroom Classical Statues", "artroom1.npy"),
-        ("mid_02", "Bandsaw Heavy Workshop", "bandsaw1.npy"),
-        ("mid_03", "Chess Pieces Macro Edge", "chess1.npy"),
-        ("mid_04", "Antique Curule Structure", "curule1.npy"),
-        ("mid_05", "Industrial Ladder Rungs", "ladder1.npy"),
-        ("mid_06", "Pendulum Mechanism Study", "pendulum1.npy"),
+    mid_files = sorted([f.name for f in Path("data/processed/middlebury/rgb").glob("*.npy")])[:10]
+    mid_titles = [
+        "Artroom Classical Statues", "Artroom Perspective Shift", "Bandsaw Heavy Workshop",
+        "Bandsaw Blade Close-Up", "Chess Pieces Macro Edge", "Chess Board High-Angle",
+        "Chess Endgame Setup", "Antique Curule Structure", "Curule Carved Armrest",
+        "Curule Leg Geometry"
     ]
     
-    print("Generating 6 Middlebury Stereo Scenes...")
-    for sid, title, fname in mid_scenes:
+    print(f"Generating {len(mid_files)} Middlebury Stereo Scenes...")
+    for idx, fname in enumerate(mid_files):
+        sid = f"mid_{idx+1:02d}"
+        title = mid_titles[idx] if idx < len(mid_titles) else f"Middlebury Scene {idx+1}"
         rgb_p = Path("data/processed/middlebury/rgb") / fname
         gt_p = Path("data/processed/middlebury/gt") / fname
         if not (rgb_p.exists() and gt_p.exists()):
-            print(f"Skipping {fname}, file missing")
             continue
         
-        # Standardize size to 640x360
         rgb = cv2.resize(np.load(rgb_p), (640, 360), interpolation=cv2.INTER_AREA)
         gt_full = cv2.resize(np.load(gt_p), (640, 360), interpolation=cv2.INTER_NEAREST).astype(np.float32)
         valid = gt_full > 0
@@ -218,10 +214,9 @@ def main():
         })
     
     out_json = presets_dir / "gallery_manifest.json"
-    with open(out_json, "w", encoding="utf-8") as f:
+    with open(out_json, "w") as f:
         json.dump(manifest, f, indent=2)
-    print(f"\nSuccessfully generated {len(manifest)} benchmark scenes in {presets_dir}!")
-    print(f"Saved manifest to {out_json}")
+    print(f"Successfully generated {len(manifest)} gallery benchmark scenes to {out_json}!")
 
 if __name__ == "__main__":
     main()
