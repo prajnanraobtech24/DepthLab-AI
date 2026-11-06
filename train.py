@@ -5,12 +5,16 @@ from torch.utils.data import Dataset, DataLoader
 from src.model import DepthRefineNet
 
 class DensePairs(Dataset):
-    def __init__(self,root,split,height=240,width=320,augment=False,eval_scale=4):
+    def __init__(self,root,split,height=240,width=320,augment=False,eval_scale=4,limit=0):
         self.root=root; self.split=split; self.height=height; self.width=width; self.augment=augment; self.eval_scale=eval_scale
         rg={os.path.basename(x):x for x in glob.glob(f'{root}/{split}/rgb/*.npy')}
         gt={os.path.basename(x):x for x in glob.glob(f'{root}/{split}/gt/*.npy')}
-        self.pairs=[(rg[k],gt[k]) for k in sorted(set(rg)&set(gt))]
+        common=sorted(set(rg)&set(gt))
+        if limit and limit > 0:
+            common = common[:limit]
+        self.pairs=[(rg[k],gt[k]) for k in common]
         if not self.pairs: raise RuntimeError(f'No matching RGB/GT NPY pairs in {root}/{split}')
+
     def __len__(self): return len(self.pairs)
     def __getitem__(self,i):
         rp,gp=self.pairs[i]
@@ -53,22 +57,26 @@ def gradient_loss(pred,target,mask):
     return ((px-tx).abs()*mx).sum()/(mx.sum()+1e-6)+((py-ty).abs()*my).sum()/(my.sum()+1e-6)
 
 def main():
-    p=argparse.ArgumentParser(); p.add_argument('--data',default='data/nyu'); p.add_argument('--epochs',type=int,default=30); p.add_argument('--batch-size',type=int,default=4); p.add_argument('--lr',type=float,default=1e-3); p.add_argument('--out',default='checkpoints/depthrefinenet.pt'); p.add_argument('--height',type=int,default=240); p.add_argument('--width',type=int,default=320); p.add_argument('--seed',type=int,default=42); a=p.parse_args()
+    p=argparse.ArgumentParser(); p.add_argument('--data',default='data/processed/nyu'); p.add_argument('--epochs',type=int,default=10); p.add_argument('--batch-size',type=int,default=8); p.add_argument('--lr',type=float,default=1e-3); p.add_argument('--out',default='checkpoints/depthrefinenet.pt'); p.add_argument('--height',type=int,default=240); p.add_argument('--width',type=int,default=320); p.add_argument('--seed',type=int,default=42); p.add_argument('--limit',type=int,default=250); a=p.parse_args()
     if a.height%4 or a.width%4: raise SystemExit('Height and width must be divisible by 4')
     random.seed(a.seed); np.random.seed(a.seed); torch.manual_seed(a.seed)
-    tr=DensePairs(a.data,'train',a.height,a.width,True)
-    vals=[DensePairs(a.data,'val',a.height,a.width,False,s) for s in (2,4,8)]
+    tr=DensePairs(a.data,'train',a.height,a.width,True,limit=a.limit)
+    vals=[DensePairs(a.data,'val',a.height,a.width,False,s,limit=min(50, a.limit) if a.limit else 50) for s in (2,4,8)]
     train=DataLoader(tr,batch_size=a.batch_size,shuffle=True,num_workers=0)
     vloads=[DataLoader(v,batch_size=a.batch_size,shuffle=False,num_workers=0) for v in vals]
     dev='cuda' if torch.cuda.is_available() else 'cpu'; model=DepthRefineNet().to(dev)
-    opt=torch.optim.AdamW(model.parameters(),lr=a.lr,weight_decay=1e-4); best=float('inf'); history=[]
+    opt=torch.optim.AdamW(model.parameters(),lr=a.lr,weight_decay=1e-4)
+    sched=torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=a.epochs, eta_min=1e-5)
+    best=float('inf'); history=[]
     os.makedirs(os.path.dirname(a.out) or '.',exist_ok=True)
+    print(f"Starting training on {dev} with {len(tr)} training pairs, batch_size={a.batch_size}, {a.epochs} epochs...")
     for ep in range(a.epochs):
         model.train(); losses=[]
         for x,y,m in train:
             x,y,m=x.to(dev),y.to(dev),m.to(dev); pred=model(x)
             l1=((pred-y).abs()*m).sum()/(m.sum()+1e-6); loss=l1+.1*gradient_loss(pred,y,m)
             opt.zero_grad(); loss.backward(); torch.nn.utils.clip_grad_norm_(model.parameters(),1.0); opt.step(); losses.append(float(loss.item()))
+        sched.step()
         model.eval(); by_scale={}
         with torch.inference_mode():
             for sc,loader in zip((2,4,8),vloads):
@@ -78,9 +86,9 @@ def main():
                     scores.append(float(((pred-y).abs()*m).sum()/(m.sum()+1e-6)))
                 by_scale[str(sc)]=float(np.mean(scores))
         val=float(np.mean(list(by_scale.values()))); row={'epoch':ep+1,'train_loss':float(np.mean(losses)),'val_mae_normalized_by_scale':by_scale,'val_mean':val}; history.append(row)
-        print(json.dumps(row))
+        print(f"Epoch {ep+1:2d}/{a.epochs}: Train Loss={row['train_loss']:.5f}, Val MAE (2x/4x/8x mean)={val:.5f}")
         if val<best:
-            best=val; torch.save({'model_state_dict':model.state_dict(),'depth_min_m':.1,'depth_max_m':10.,'input_channels':5,'training_scales':[2,4,8],'architecture':'DepthRefineNet-U-Net','best_val_mae_normalized':best},a.out)
+            best=val; torch.save({'model_state_dict':model.state_dict(),'depth_min_m':.1,'depth_max_m':10.,'input_channels':5,'training_scales':[2,4,8],'architecture':'DepthRefineNet-Residual-U-Net','best_val_mae_normalized':best},a.out)
     out_dir=os.path.dirname(a.out) or '.'
     with open(os.path.join(out_dir,'training_history.json'),'w') as f: json.dump(history,f,indent=2)
     print(f'Best validation normalized MAE={best:.6f}; checkpoint={a.out}; device={dev}')

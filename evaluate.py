@@ -16,9 +16,8 @@ def mean_rows(rows, keys):
 
 def timed_run(rgb, low, scale, filt, checkpoint, mode, interp, repeats, **kwargs):
     fn=lambda: reconstruct(rgb,low,scale,filt,checkpoint,mode,interpolation=interp,min_depth=.1,max_depth=10.,include_comparisons=False,**kwargs)
-    fn()  # warm-up / model load
     times=[]; result=None
-    for _ in range(repeats):
+    for _ in range(max(1, repeats)):
         t=time.perf_counter(); result=fn(); times.append((time.perf_counter()-t)*1000)
     return result,float(statistics.median(times))
 
@@ -53,7 +52,7 @@ def main():
             r,lat=timed_run(rgb,low,4,'guided',a.checkpoint,'Deep learning','bilinear',a.repeats,**kwargs)
             pred=.1+r['output']*9.9; pred[~r['output_valid']]=0.0
             ablations.append({'sample':name,'variant':label,**compute_metrics(pred,truth,valid,.1,10),'latency_ms':lat})
-        if idx%10==0: print(f'Evaluated {idx}/{len(ids)} test samples')
+        print(f'Evaluated {idx}/{len(ids)}: {name}', flush=True)
     metric_keys=['RMSE_m','MAE_m','PSNR_dB','SSIM','Edge_F1','Boundary_F1_2px','Boundary_MAE_m','NonBoundary_MAE_m','prediction_coverage','latency_ms']
     summary=[]
     for scale in (2,4,8):

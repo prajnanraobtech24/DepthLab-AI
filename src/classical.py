@@ -136,21 +136,23 @@ def knn_fill(rgb, sparse, valid_mask, k=5, spatial_sigma=4.0, color_sigma=0.12):
     d = np.asarray(sparse, np.float32); m = np.asarray(valid_mask, bool) & np.isfinite(d)
     h, w = d.shape
     if not m.any(): raise ValueError("KNN requires at least one valid depth sample")
-    yy, xx = np.indices((h, w)); valid_xy = np.column_stack([yy[m], xx[m]])
+    if m.all(): return d.copy()
+    out = d.copy()
+    yy, xx = np.indices((h, w)); valid_xy = np.column_stack([yy[m], xx[m]]).astype(np.float32)
     valid_values = d[m]
     guide = cv2.resize(rgb, (w, h), interpolation=cv2.INTER_AREA).astype(np.float32)
     if guide.max(initial=0) > 1: guide /= 255.0
     valid_colors = guide[m]
-    tree = cKDTree(valid_xy.astype(np.float32))
-    query_xy = np.column_stack([yy.ravel(), xx.ravel()]).astype(np.float32)
-    dist, idx = tree.query(query_xy, k=min(k, len(valid_values)), workers=-1)
+    tree = cKDTree(valid_xy)
+    missing = ~m
+    query_xy = np.column_stack([yy[missing], xx[missing]]).astype(np.float32)
+    dist, idx = tree.query(query_xy, k=min(k, len(valid_values)), workers=1)
     if dist.ndim == 1: dist, idx = dist[:, None], idx[:, None]
-    query_colors = guide.reshape(-1, 3)
+    query_colors = guide[missing]
     color_dist = np.sum((query_colors[:, None, :] - valid_colors[idx])**2, axis=2)
     weights = np.exp(-(dist**2)/(2*spatial_sigma**2+1e-8) - color_dist/(2*color_sigma**2+1e-8))
     weights /= np.maximum(weights.sum(axis=1, keepdims=True), 1e-8)
-    out = np.sum(weights * valid_values[idx], axis=1).reshape(h, w).astype(np.float32)
-    out[m] = d[m]
+    out[missing] = np.sum(weights * valid_values[idx], axis=1).astype(np.float32)
     return np.clip(out, 0, 1)
 
 

@@ -4,7 +4,7 @@ from src.pipeline import reconstruct
 from src.metrics import compute_metrics
 
 def main():
-    p=argparse.ArgumentParser(); p.add_argument('--data',default='data/nyu'); p.add_argument('--checkpoint',default='checkpoints/depthrefinenet.pt'); p.add_argument('--out',default='results/robustness.json'); p.add_argument('--limit',type=int,default=50); p.add_argument('--seed',type=int,default=123); a=p.parse_args()
+    p=argparse.ArgumentParser(); p.add_argument('--data',default='data/processed/nyu'); p.add_argument('--checkpoint',default='checkpoints/depthrefinenet.pt'); p.add_argument('--out',default='results/robustness.json'); p.add_argument('--limit',type=int,default=50); p.add_argument('--seed',type=int,default=123); a=p.parse_args()
     if not os.path.isfile(a.checkpoint): raise SystemExit('A trained checkpoint is required. Train first.')
     root=f'{a.data}/test'; rg={os.path.basename(x):x for x in glob.glob(root+'/rgb/*.npy')}; gt={os.path.basename(x):x for x in glob.glob(root+'/gt/*.npy')}; ids=sorted(set(rg)&set(gt))[:a.limit]
     if not ids: raise SystemExit('No matching test pairs found')
