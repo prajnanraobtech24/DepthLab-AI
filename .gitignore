@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.env
+.DS_Store
+# Dataset downloads, extracted raw data and processed arrays are local-only.
+data/downloads/**
+data/raw/**
+data/processed/**
+!data/**/.gitkeep
+checkpoints/**
+results/**
+*.pt
+*.pth
