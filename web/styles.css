@@ -207,6 +207,10 @@
 .arch-arrow{font-size:14px;color:#455e81;padding:0 2px}
 .arch-dual-branch{flex:1.4;display:flex;flex-direction:column;gap:6px;min-width:210px}
 .arch-branch-join{text-align:center;font-family:var(--mono);font-size:7px;color:#8199b9;letter-spacing:.5px;padding:2px 0}
+.figma-board-pill{display:inline-flex;align-items:center;gap:7px;background:#1e1435;border:1px solid #7c3aed;color:#c4b5fd;padding:6px 14px;border-radius:20px;font-family:var(--mono);font-size:9px;font-weight:700;text-decoration:none;transition:all .2s;cursor:pointer}
+.figma-board-pill:hover{background:#2e1065;color:#fff;border-color:#a855f7;box-shadow:0 0 14px rgba(124,58,237,0.4);transform:translateY(-1px)}
+body.light-mode .figma-board-pill{background:#f3e8ff;border-color:#c084fc;color:#6b21a8}
+body.light-mode .figma-board-pill:hover{background:#ede9fe;color:#581c87}
 
 /* Stepwise Tour Card Mockup Match (Image 1) */
 .tour-card-popup{position:fixed;z-index:10000;width:420px;max-width:92vw;background:#ffffff;border:1px solid #e2e8f0;border-radius:14px;padding:20px 22px;box-shadow:0 20px 45px rgba(0,0,0,0.25),0 0 25px rgba(2,132,199,0.15);color:#0f172a;transition:top .25s ease,left .25s ease,opacity .2s ease;font-family:var(--font)}

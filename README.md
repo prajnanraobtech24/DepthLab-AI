@@ -4,6 +4,12 @@
 
 DepthLab AI reconstructs dense high-resolution depth from a low-resolution or full-resolution sparse depth map, optionally guided by an aligned RGB image. It provides interpolation baselines, RGB-aware KNN, joint bilateral and guided filtering, a compact CNN U-Net, and confidence-adaptive hybrid fusion.
 
+## System Architecture
+
+![DepthLab AI System Architecture](assets/system_architecture.png)
+
+*Interactive FigJam Architecture Board:* [DepthLab AI - System Architecture on FigJam](https://www.figma.com/board/RWWzVX9Fie6uvLxEGQ2yyU)
+
 > **Important:** This source package does not contain NYU/KITTI/Middlebury datasets or trained weights. It does not claim benchmark results before you run the prepared datasets and training/evaluation scripts. The application works in classical mode before a checkpoint is trained.
 
 ## 1. Dataset placement — do this once
@@ -187,8 +193,8 @@ Deploy the Docker image or Python app to a public host, then verify the URL from
 
 - [ ] Live hosted application URL tested from phone and laptop.
 - [ ] Public GitHub repository with complete source code.
-- [ ] Architecture diagram matches the final code.
-- [ ] Design document has methodology, datasets, implementation, evaluation, limitations and ethics.
+- [x] Architecture diagram matches the final code (`assets/system_architecture.png` & `docs/architecture.md`).
+- [x] Design document has methodology, datasets, implementation, evaluation, limitations and ethics (`docs/design_document.md`).
 - [x] `eval_P4_T04.md`: first line contains all team USNs (`1RUA24CSE0243,1RUA24CSE0263,1RUA24CSE0270,1RUA24CSE0308`), comma-separated, followed by comprehensive comparative metrics across 2×, 4×, and 8× scales.
 - [ ] Comparative results for interpolation, classical, CNN and hybrid, including KNN baseline.
 - [ ] 2×/4×/8× results, MAE/RMSE, PSNR/SSIM, edge/boundary accuracy, latency and memory.

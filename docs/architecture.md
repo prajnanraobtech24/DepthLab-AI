@@ -1,5 +1,9 @@
 # System Architecture — DepthLab AI (P4)
 
+![DepthLab AI System Architecture](architecture.png)
+
+*Interactive FigJam Board:* [DepthLab AI - System Architecture on FigJam](https://www.figma.com/board/RWWzVX9Fie6uvLxEGQ2yyU)
+
 ```mermaid
 flowchart TD
   U[Responsive browser UI] -->|RGB + depth + optional GT + settings| API[FastAPI validation]
