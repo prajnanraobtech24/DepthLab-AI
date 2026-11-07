@@ -70,6 +70,7 @@ health();
 
 // 1-Click Fast Benchmarking Presets
 async function loadPreset(name, config) {
+  if (isTourActive) stopTour();
   toast(`Loading ${config.label} benchmark preset...`);
   try {
     const fetchBlob = async url => {
@@ -222,6 +223,7 @@ function renderGallery(filterCategory, query) {
     `;
 
     card.addEventListener('click', () => {
+      if (isTourActive) stopTour();
       loadPreset(item.id, {
         label: `${item.title} (${item.dataset})`,
         rgbUrl: item.rgbUrl,
@@ -289,6 +291,28 @@ function switchView(mode) {
 
 // Reconstruction Execution
 $('runBtn').addEventListener('click', async () => {
+  if (isTourActive) {
+    stopTour();
+  }
+
+  // Auto-load benchmark preset if files are not staged yet so reconstruction never fails
+  if (!$('rgbInput').files[0] || !$('depthInput').files[0]) {
+    toast('Auto-loading NYU Living Room benchmark scene...');
+    await loadPreset('nyu', {
+      label: 'NYU Indoor 4x',
+      rgbUrl: '/assets/presets/nyu_rgb.png',
+      depthUrl: '/assets/presets/nyu_depth.png',
+      gtUrl: '/assets/presets/nyu_gt.png',
+      profile: 'NYU indoor · 10 m',
+      units: 'millimetres',
+      inputType: 'low_resolution',
+      mode: 'Hybrid',
+      method: 'guided',
+      scale: 4
+    });
+    return;
+  }
+
   const btn = $('runBtn');
   btn.disabled = true;
   btn.classList.add('loading');
@@ -862,8 +886,14 @@ function startTour(stepIndex = 0) {
   currentTourStep = Math.max(0, Math.min(stepIndex, TOUR_STEPS.length - 1));
   const backdrop = $('tourBackdrop');
   const card = $('tourCard');
-  if (backdrop) backdrop.classList.add('active');
-  if (card) card.style.display = 'block';
+  if (backdrop) {
+    backdrop.style.display = 'block';
+    void backdrop.offsetWidth; // Force reflow
+    backdrop.classList.add('active');
+  }
+  if (card) {
+    card.style.display = 'block';
+  }
   showTourStep(currentTourStep);
 }
 
@@ -871,111 +901,144 @@ function stopTour() {
   isTourActive = false;
   const backdrop = $('tourBackdrop');
   const card = $('tourCard');
-  if (backdrop) backdrop.classList.remove('active');
-  if (card) card.style.display = 'none';
+  if (backdrop) {
+    backdrop.classList.remove('active');
+    backdrop.style.display = 'none';
+  }
+  if (card) {
+    card.style.display = 'none';
+  }
   document.querySelectorAll('.tour-spotlight-active').forEach(el => el.classList.remove('tour-spotlight-active'));
 }
 
 function showTourStep(index) {
-  currentTourStep = index;
-  const step = TOUR_STEPS[index];
-  if (!step) return;
+  try {
+    currentTourStep = Math.max(0, Math.min(index, TOUR_STEPS.length - 1));
+    const step = TOUR_STEPS[currentTourStep];
+    if (!step) return;
 
-  // Clear previous spotlights
-  document.querySelectorAll('.tour-spotlight-active').forEach(el => el.classList.remove('tour-spotlight-active'));
+    // Clear previous spotlights
+    document.querySelectorAll('.tour-spotlight-active').forEach(el => el.classList.remove('tour-spotlight-active'));
 
-  const target = $(step.targetId);
-  const scrollTarget = $(step.scrollId) || target;
+    const target = $(step.targetId);
+    const scrollTarget = $(step.scrollId) || target;
 
-  if (target) {
-    target.classList.add('tour-spotlight-active');
+    if (target) {
+      target.classList.add('tour-spotlight-active');
+    }
+
+    // Fast, responsive smooth scrolling to top of targeted section
+    if (scrollTarget) {
+      const topOffset = window.innerWidth <= 768 ? 60 : 76;
+      const elementPosition = scrollTarget.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - topOffset;
+      window.scrollTo({
+        top: Math.max(0, offsetPosition),
+        behavior: 'smooth'
+      });
+    }
+
+    // Update card content immediately
+    if ($('tourStepBadge')) $('tourStepBadge').textContent = `STEP ${currentTourStep + 1} OF ${TOUR_STEPS.length}`;
+    if ($('tourTitleText')) $('tourTitleText').textContent = step.title;
+    if ($('tourDesc')) $('tourDesc').textContent = step.desc;
+
+    // Render dots matching UI
+    const dotsContainer = $('tourDots');
+    if (dotsContainer) {
+      dotsContainer.innerHTML = '';
+      TOUR_STEPS.forEach((_, i) => {
+        const dot = document.createElement('div');
+        dot.className = `tour-dot ${i === currentTourStep ? 'active' : (i < currentTourStep ? 'completed' : '')}`;
+        dot.onclick = () => showTourStep(i);
+        dot.title = `Jump to Step ${i + 1}`;
+        dotsContainer.appendChild(dot);
+      });
+    }
+
+    // Action button to run reconstruction directly from tour
+    const runActionBtn = $('tourRunActionBtn');
+    if (runActionBtn) {
+      if (currentTourStep === 2 || currentTourStep === 5 || currentTourStep === 7) {
+        runActionBtn.style.display = 'inline-flex';
+        runActionBtn.textContent = currentTourStep === 7 ? '⚡ Run Reconstruction Now' : '⚡ Run Benchmark Demo';
+      } else {
+        runActionBtn.style.display = 'none';
+      }
+    }
+
+    // Button labels
+    if ($('tourPrevBtn')) $('tourPrevBtn').style.visibility = currentTourStep === 0 ? 'hidden' : 'visible';
+    if ($('tourNextBtn')) $('tourNextBtn').textContent = currentTourStep === TOUR_STEPS.length - 1 ? 'Finish Tour ✦' : 'Next Step →';
+
+    // Position card immediately, then re-align smoothly as scroll settles
+    positionTourCard(target);
+    setTimeout(() => positionTourCard(target), 180);
+    setTimeout(() => positionTourCard(target), 400);
+  } catch (err) {
+    console.error('Tour step error:', err);
+    stopTour();
   }
-
-  // Fast, responsive smooth scrolling to top of targeted section
-  if (scrollTarget) {
-    const topOffset = 72;
-    const elementPosition = scrollTarget.getBoundingClientRect().top;
-    const offsetPosition = elementPosition + window.pageYOffset - topOffset;
-    window.scrollTo({
-      top: Math.max(0, offsetPosition),
-      behavior: 'smooth'
-    });
-  }
-
-  // Update card content immediately
-  $('tourStepBadge').textContent = `STEP ${index + 1} OF ${TOUR_STEPS.length}`;
-  if ($('tourTitleText')) $('tourTitleText').textContent = step.title;
-  $('tourDesc').textContent = step.desc;
-
-  // Render dots matching Image 1
-  const dotsContainer = $('tourDots');
-  if (dotsContainer) {
-    dotsContainer.innerHTML = '';
-    TOUR_STEPS.forEach((_, i) => {
-      const dot = document.createElement('div');
-      dot.className = `tour-dot ${i === index ? 'active' : (i < index ? 'completed' : '')}`;
-      dot.onclick = () => showTourStep(i);
-      dot.title = `Jump to Step ${i + 1}`;
-      dotsContainer.appendChild(dot);
-    });
-  }
-
-  // Button labels
-  $('tourPrevBtn').style.visibility = index === 0 ? 'hidden' : 'visible';
-  $('tourNextBtn').textContent = index === TOUR_STEPS.length - 1 ? 'Finish Tour ✦' : 'Next Step →';
-
-  // Position card immediately, then re-align smoothly as scroll settles
-  positionTourCard(target);
-  setTimeout(() => positionTourCard(target), 180);
-  setTimeout(() => positionTourCard(target), 400);
 }
 
 function positionTourCard(target) {
   const card = $('tourCard');
   if (!card) return;
 
-  const cardWidth = Math.min(410, window.innerWidth - 32);
-  card.style.width = `${cardWidth}px`;
-  const cardHeight = card.offsetHeight || 220;
+  // Mobile / Tablet full responsiveness
+  if (window.innerWidth <= 768) {
+    card.style.position = 'fixed';
+    card.style.top = 'auto';
+    card.style.bottom = '14px';
+    card.style.left = '12px';
+    card.style.right = '12px';
+    card.style.width = 'auto';
+    card.style.maxWidth = 'calc(100vw - 24px)';
+    card.style.margin = '0 auto';
+    card.style.transform = 'none';
+    return;
+  }
 
-  if (!target) {
-    card.style.top = `${window.innerHeight - cardHeight - 28}px`;
-    card.style.left = `${window.innerWidth - cardWidth - 28}px`;
+  // Desktop / Laptop positioning
+  card.style.position = 'fixed';
+  card.style.bottom = 'auto';
+  card.style.right = 'auto';
+  card.style.margin = '0';
+  card.style.transform = 'none';
+
+  const cardWidth = Math.min(420, window.innerWidth - 48);
+  card.style.width = `${cardWidth}px`;
+  const cardHeight = card.offsetHeight || 240;
+
+  if (!target || !target.getBoundingClientRect) {
+    card.style.top = `${Math.max(80, window.innerHeight - cardHeight - 24)}px`;
+    card.style.left = `${Math.max(20, window.innerWidth - cardWidth - 28)}px`;
     return;
   }
 
   const rect = target.getBoundingClientRect();
-  const isLargeSection = rect.height > 380 || target.tagName === 'SECTION';
+  const isLargeSection = rect.height > 360 || target.tagName === 'SECTION';
 
   // For large full-width sections (Overview, Why Depth, Gallery, Methods, Evaluation),
-  // dock stably at bottom-right of viewport so the section is 100% visible and the card never covers or jumps
+  // dock stably at bottom-right of viewport so the section is 100% visible
   if (isLargeSection) {
-    card.style.top = `${window.innerHeight - cardHeight - 28}px`;
-    card.style.left = `${window.innerWidth - cardWidth - 28}px`;
+    card.style.top = `${Math.max(80, window.innerHeight - cardHeight - 24)}px`;
+    card.style.left = `${Math.max(20, window.innerWidth - cardWidth - 28)}px`;
     return;
   }
 
   // For smaller targeted controls (dropzone, scale choices, run button):
-  let top = rect.bottom + 14;
+  let top = rect.bottom + 16;
   let left = rect.left;
 
   // If overflowing below viewport, position above target
   if (top + cardHeight > window.innerHeight - 20) {
-    top = rect.top - cardHeight - 14;
+    top = rect.top - cardHeight - 16;
   }
 
-  // If clipped above or below, clamp safely inside viewport
-  if (top < 20 || top + cardHeight > window.innerHeight - 10) {
-    top = window.innerHeight - cardHeight - 24;
-  }
-
-  // Clamp horizontally inside viewport
-  if (left + cardWidth > window.innerWidth - 20) {
-    left = window.innerWidth - cardWidth - 20;
-  }
-  if (left < 20) {
-    left = Math.max(16, (window.innerWidth - cardWidth) / 2);
-  }
+  // Clamp safely inside viewport
+  top = Math.max(76, Math.min(window.innerHeight - cardHeight - 20, top));
+  left = Math.max(20, Math.min(window.innerWidth - cardWidth - 24, left));
 
   card.style.top = `${Math.round(top)}px`;
   card.style.left = `${Math.round(left)}px`;
@@ -983,7 +1046,18 @@ function positionTourCard(target) {
 
 // Wire tour controls
 if ($('tourCloseBtn')) $('tourCloseBtn').onclick = stopTour;
-if ($('tourBackdrop')) $('tourBackdrop').onclick = stopTour;
+if ($('tourBackdrop')) {
+  $('tourBackdrop').onclick = (e) => {
+    e.stopPropagation();
+    stopTour();
+  };
+}
+if ($('tourRunActionBtn')) {
+  $('tourRunActionBtn').onclick = () => {
+    stopTour();
+    $('runBtn').click();
+  };
+}
 if ($('tourPrevBtn')) $('tourPrevBtn').onclick = () => { if (currentTourStep > 0) showTourStep(currentTourStep - 1); };
 if ($('tourNextBtn')) $('tourNextBtn').onclick = () => {
   if (currentTourStep < TOUR_STEPS.length - 1) {
@@ -1031,3 +1105,23 @@ window.addEventListener('resize', () => {
     positionTourCard(target);
   }
 });
+
+// Mobile navigation drawer toggle
+const mobileMenuBtn = $('mobileMenuBtn');
+const sidebarEl = document.querySelector('.sidebar');
+if (mobileMenuBtn && sidebarEl) {
+  mobileMenuBtn.addEventListener('click', () => {
+    sidebarEl.classList.toggle('mobile-open');
+    mobileMenuBtn.textContent = sidebarEl.classList.contains('mobile-open') ? '✕' : '☰';
+  });
+
+  // Automatically close sidebar drawer when any nav link is tapped on mobile
+  document.querySelectorAll('.sidebar .nav').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) {
+        sidebarEl.classList.remove('mobile-open');
+        if (mobileMenuBtn) mobileMenuBtn.textContent = '☰';
+      }
+    });
+  });
+}
