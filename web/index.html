@@ -12,7 +12,10 @@
 <body>
 <div class="shell">
 <aside class="sidebar">
-  <a class="brand" href="/"><span class="brand-mark">◈</span><span>depthlab<span class="brand-ai">.ai</span><small>PHASE 4 DEPTH REFINEMENT</small></span></a>
+  <div class="sidebar-header-row">
+    <a class="brand" href="/"><span class="brand-mark">◈</span><span>depthlab<span class="brand-ai">.ai</span><small>PHASE 4 DEPTH REFINEMENT</small></span></a>
+    <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close navigation">✕</button>
+  </div>
   
   <div class="sidebar-status-pill">
     <span class="status-dot online" id="serverDot"></span>
@@ -63,6 +66,7 @@
     </div>
   </div>
 </aside>
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 <main class="main">
 <header class="topbar">
   <div class="topbar-left">
@@ -349,7 +353,6 @@
           <select id="galleryGtFilter">
             <option value="all" selected>All Scenes</option>
             <option value="with_gt">With Ground Truth</option>
-            <option value="unseen">Real Sensor Only</option>
           </select>
           <span>⌄</span>
         </div>

@@ -1283,22 +1283,50 @@ window.addEventListener('resize', () => {
   }
 });
 
-// Mobile navigation drawer toggle
+// Mobile navigation drawer toggle & backdrop control
 const mobileMenuBtn = $('mobileMenuBtn');
+const sidebarCloseBtn = $('sidebarCloseBtn');
+const sidebarBackdrop = $('sidebarBackdrop');
 const sidebarEl = document.querySelector('.sidebar');
-if (mobileMenuBtn && sidebarEl) {
-  mobileMenuBtn.addEventListener('click', () => {
-    sidebarEl.classList.toggle('mobile-open');
-    mobileMenuBtn.textContent = sidebarEl.classList.contains('mobile-open') ? '✕' : '☰';
-  });
 
-  // Automatically close sidebar drawer when any nav link is tapped on mobile
-  document.querySelectorAll('.sidebar .nav').forEach(link => {
-    link.addEventListener('click', () => {
-      if (window.innerWidth <= 768) {
-        sidebarEl.classList.remove('mobile-open');
-        if (mobileMenuBtn) mobileMenuBtn.textContent = '☰';
-      }
-    });
-  });
+function openSidebar() {
+  if (sidebarEl) sidebarEl.classList.add('mobile-open');
+  if (sidebarBackdrop) sidebarBackdrop.classList.add('active');
+  document.body.classList.add('sidebar-locked');
+  if (mobileMenuBtn) mobileMenuBtn.textContent = '✕';
 }
+
+function closeSidebar() {
+  if (sidebarEl) sidebarEl.classList.remove('mobile-open');
+  if (sidebarBackdrop) sidebarBackdrop.classList.remove('active');
+  document.body.classList.remove('sidebar-locked');
+  if (mobileMenuBtn) mobileMenuBtn.textContent = '☰';
+}
+
+function toggleSidebar() {
+  if (sidebarEl && sidebarEl.classList.contains('mobile-open')) {
+    closeSidebar();
+  } else {
+    openSidebar();
+  }
+}
+
+if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleSidebar);
+if (sidebarCloseBtn) sidebarCloseBtn.addEventListener('click', closeSidebar);
+if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', closeSidebar);
+
+// Automatically close sidebar drawer when any nav link or action is tapped on mobile/tablet
+document.querySelectorAll('.sidebar .nav, .sidebar .start-tour-pill-btn, .sidebar #themeSwitchBtn').forEach(el => {
+  el.addEventListener('click', () => {
+    if (window.innerWidth <= 1040) {
+      closeSidebar();
+    }
+  });
+});
+
+// Close on Escape key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && sidebarEl && sidebarEl.classList.contains('mobile-open')) {
+    closeSidebar();
+  }
+});
