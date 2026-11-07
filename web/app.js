@@ -801,62 +801,61 @@ function initTheme() {
 initTheme();
 
 // =========================================================================
-// INTERACTIVE STEPWISE SPOTLIGHT TOUR (8 STEPS)
+// INTERACTIVE STEPWISE SPOTLIGHT TOUR (8 STEPS - FULL PLATFORM TOUR FIRST)
 // =========================================================================
 const TOUR_STEPS = [
   {
     targetId: 'overview',
     scrollId: 'overview',
     title: 'Step 1: System Overview & Platform',
-    desc: 'Welcome to DepthLab AI. An edge-aware depth completion & upsampling framework designed for P4: Robust Depth Reconstruction across indoor, outdoor LiDAR, and active stereo.'
+    desc: 'Welcome to DepthLab AI. Inspect our research framework, dual-branch CNN and confidence solver specs (1.3M parameters), and interactive Middlebury boundary comparison preview.'
   },
   {
     targetId: 'why-depth',
     scrollId: 'why-depth',
-    title: 'Step 2: Why Depth Matters & Core Concepts',
-    desc: 'Explore why depth upsampling is challenging: boundary tearing, sensor null returns, and texture-copying artifacts, and see the hybrid principles used to solve them.'
+    title: 'Step 2: Why Depth Matters & Geometric Physics',
+    desc: 'Explore the 4 physical challenges of depth super-resolution: boundary tearing, sensor null voids, texture copying, and how confidence-adaptive hybrid fusion resolves them.'
   },
   {
     targetId: 'gallery',
     scrollId: 'gallery',
-    title: 'Step 3: Dataset Explorer (50 Scenes)',
-    desc: 'Browse authentic paired scenes across NYU Depth V2, KITTI LiDAR, and Middlebury Stereo. Click any scene to stage it or use real-time keyword search.'
+    title: 'Step 3: 50-Scene Benchmark Suite',
+    desc: 'Browse 50 authentic paired scenes across NYU Depth V2, KITTI LiDAR, and Middlebury Stereo. Filter by sensor domain or search by environment keyword.'
   },
   {
-    targetId: 'rgbDrop',
-    scrollId: 'rgbDrop',
-    title: 'Step 4: Dual-Stream Scene Uploads',
-    desc: 'Upload arbitrary unseen RGB guidance images and low-resolution or sparse depth maps (PNG, 16-bit uint16 mm, TIFF, NPY) with optional ground truth.'
-  },
-  {
-    targetId: 'scaleChoices',
-    scrollId: 'scaleChoices',
-    title: 'Step 5: Multi-Scale & Fusion Controls',
-    desc: 'Select 2×, 4×, or 8× upsampling factors, choose Guided or Joint Bilateral edge-preserving filters, and balance the classical-deep fusion weight (alpha slider).'
-  },
-  {
-    targetId: 'runBtn',
-    scrollId: 'runBtn',
-    title: 'Step 6: Run Reconstruction Lab',
-    desc: 'Execute real-time reconstruction in ~120 ms. Masked interpolation, structural edge filters, and residual U-Net run seamlessly in-memory.'
-  },
-  {
-    targetId: 'results',
-    scrollId: 'results',
-    title: 'Step 7: 2D Comparisons & 3D WebGL Studio',
-    desc: 'Compare baseline interpolation, KNN, classical filtering, and hybrid outputs side-by-side. Rotate, pan, and elevate the reconstructed scene in interactive 3D WebGL!'
+    targetId: 'methods',
+    scrollId: 'methods',
+    title: 'Step 4: System Architecture & Visual Pipeline',
+    desc: 'Inspect the end-to-end processing pipeline: dual-sensor inputs, zero-bleed masking, and dual-branch gating. Click "Open FigJam Diagram" to view the live Figma board!'
   },
   {
     targetId: 'evaluation',
     scrollId: 'evaluation',
-    title: 'Step 8: Metric Audit & Research Exports',
-    desc: 'Audit exact physical errors in metres (RMSE, MAE, Boundary F1, PSNR, SSIM) against ground truth, and export lossless 16-bit metric PNG, raw .npy, boundary maps, or JSON.'
+    title: 'Step 5: Comparative Benchmarks & Metrics',
+    desc: 'Review the empirical ablation table across 2×, 4×, and 8× scales comparing baseline interpolation, classical filters, deep learning, and hybrid fusion against ground truth.'
+  },
+  {
+    targetId: 'rgbDrop',
+    scrollId: 'studio',
+    title: 'Step 6: Dual-Stream Scene Uploads',
+    desc: 'Now entering the Reconstruction Lab! Drop your high-resolution RGB guidance image here and your matching low-resolution or sparse depth map in the adjacent box.'
+  },
+  {
+    targetId: 'scaleChoices',
+    scrollId: 'scaleChoices',
+    title: 'Step 7: Multi-Scale & Algorithm Controls',
+    desc: 'Choose your upsampling factor (2×, 4× standard, or 8× stress test), select Guided or Joint Bilateral edge filtering, and adjust the learned branch contribution slider.'
+  },
+  {
+    targetId: 'runBtn',
+    scrollId: 'runBtn',
+    title: 'Step 8: Execute Live Reconstruction',
+    desc: 'Click "Run reconstruction" to execute real-time depth upsampling in ~120 ms! The complete 7-stage ablation grid, split slider, and 3D WebGL mesh will be rendered below.'
   }
 ];
 
 let currentTourStep = 0;
 let isTourActive = false;
-let tourTempUnhidResults = false;
 
 function startTour(stepIndex = 0) {
   isTourActive = true;
@@ -875,11 +874,6 @@ function stopTour() {
   if (backdrop) backdrop.classList.remove('active');
   if (card) card.style.display = 'none';
   document.querySelectorAll('.tour-spotlight-active').forEach(el => el.classList.remove('tour-spotlight-active'));
-  if (tourTempUnhidResults && !result) {
-    const resSec = $('results');
-    if (resSec) resSec.hidden = true;
-    tourTempUnhidResults = false;
-  }
 }
 
 function showTourStep(index) {
@@ -890,25 +884,25 @@ function showTourStep(index) {
   // Clear previous spotlights
   document.querySelectorAll('.tour-spotlight-active').forEach(el => el.classList.remove('tour-spotlight-active'));
 
-  // If results section is targeted but currently hidden, reveal it for demonstration
-  if (step.targetId === 'results' || step.scrollId === 'results') {
-    const resSec = $('results');
-    if (resSec && resSec.hidden) {
-      resSec.hidden = false;
-      tourTempUnhidResults = true;
-    }
-  }
-
   const target = $(step.targetId);
   const scrollTarget = $(step.scrollId) || target;
-  if (scrollTarget) {
-    scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
+
   if (target) {
     target.classList.add('tour-spotlight-active');
   }
 
-  // Update card content
+  // Fast, responsive smooth scrolling to top of targeted section
+  if (scrollTarget) {
+    const topOffset = 72;
+    const elementPosition = scrollTarget.getBoundingClientRect().top;
+    const offsetPosition = elementPosition + window.pageYOffset - topOffset;
+    window.scrollTo({
+      top: Math.max(0, offsetPosition),
+      behavior: 'smooth'
+    });
+  }
+
+  // Update card content immediately
   $('tourStepBadge').textContent = `STEP ${index + 1} OF ${TOUR_STEPS.length}`;
   if ($('tourTitleText')) $('tourTitleText').textContent = step.title;
   $('tourDesc').textContent = step.desc;
@@ -919,8 +913,9 @@ function showTourStep(index) {
     dotsContainer.innerHTML = '';
     TOUR_STEPS.forEach((_, i) => {
       const dot = document.createElement('div');
-      dot.className = `tour-dot ${i === index ? 'active' : ''}`;
+      dot.className = `tour-dot ${i === index ? 'active' : (i < index ? 'completed' : '')}`;
       dot.onclick = () => showTourStep(i);
+      dot.title = `Jump to Step ${i + 1}`;
       dotsContainer.appendChild(dot);
     });
   }
@@ -929,36 +924,61 @@ function showTourStep(index) {
   $('tourPrevBtn').style.visibility = index === 0 ? 'hidden' : 'visible';
   $('tourNextBtn').textContent = index === TOUR_STEPS.length - 1 ? 'Finish Tour ✦' : 'Next Step →';
 
-  // Position card near target
-  setTimeout(() => positionTourCard(target), 200);
+  // Position card immediately, then re-align smoothly as scroll settles
+  positionTourCard(target);
+  setTimeout(() => positionTourCard(target), 180);
+  setTimeout(() => positionTourCard(target), 400);
 }
 
 function positionTourCard(target) {
   const card = $('tourCard');
   if (!card) return;
 
+  const cardWidth = Math.min(410, window.innerWidth - 32);
+  card.style.width = `${cardWidth}px`;
+  const cardHeight = card.offsetHeight || 220;
+
   if (!target) {
-    card.style.top = '50%';
-    card.style.left = '50%';
-    card.style.transform = 'translate(-50%, -50%)';
+    card.style.top = `${window.innerHeight - cardHeight - 28}px`;
+    card.style.left = `${window.innerWidth - cardWidth - 28}px`;
     return;
   }
 
-  card.style.transform = 'none';
   const rect = target.getBoundingClientRect();
-  const cardWidth = 350;
-  const cardHeight = card.offsetHeight || 220;
+  const isLargeSection = rect.height > 380 || target.tagName === 'SECTION';
 
-  let left = rect.left + (rect.width / 2) - (cardWidth / 2);
-  left = Math.max(20, Math.min(window.innerWidth - cardWidth - 20, left));
-
-  let top = rect.bottom + 16;
-  if (top + cardHeight > window.innerHeight - 20) {
-    top = Math.max(20, rect.top - cardHeight - 16);
+  // For large full-width sections (Overview, Why Depth, Gallery, Methods, Evaluation),
+  // dock stably at bottom-right of viewport so the section is 100% visible and the card never covers or jumps
+  if (isLargeSection) {
+    card.style.top = `${window.innerHeight - cardHeight - 28}px`;
+    card.style.left = `${window.innerWidth - cardWidth - 28}px`;
+    return;
   }
 
-  card.style.left = `${left}px`;
-  card.style.top = `${top}px`;
+  // For smaller targeted controls (dropzone, scale choices, run button):
+  let top = rect.bottom + 14;
+  let left = rect.left;
+
+  // If overflowing below viewport, position above target
+  if (top + cardHeight > window.innerHeight - 20) {
+    top = rect.top - cardHeight - 14;
+  }
+
+  // If clipped above or below, clamp safely inside viewport
+  if (top < 20 || top + cardHeight > window.innerHeight - 10) {
+    top = window.innerHeight - cardHeight - 24;
+  }
+
+  // Clamp horizontally inside viewport
+  if (left + cardWidth > window.innerWidth - 20) {
+    left = window.innerWidth - cardWidth - 20;
+  }
+  if (left < 20) {
+    left = Math.max(16, (window.innerWidth - cardWidth) / 2);
+  }
+
+  card.style.top = `${Math.round(top)}px`;
+  card.style.left = `${Math.round(left)}px`;
 }
 
 // Wire tour controls
@@ -970,7 +990,13 @@ if ($('tourNextBtn')) $('tourNextBtn').onclick = () => {
     showTourStep(currentTourStep + 1);
   } else {
     stopTour();
-    toast('Tour completed! You are ready to explore DepthLab AI.');
+    toast('Tour completed! Click "Run reconstruction" to test the pipeline.');
+    const rBtn = $('runBtn');
+    if (rBtn) {
+      rBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      rBtn.classList.add('tour-spotlight-active');
+      setTimeout(() => rBtn.classList.remove('tour-spotlight-active'), 2500);
+    }
   }
 };
 
