@@ -64,11 +64,21 @@ Let $\Omega \subset \mathbb{R}^2$ be the discrete 2D spatial image lattice of di
 
 ### 2.2 Boolean Validity Masking (Eliminating Zero-Bleeding)
 To prevent unmeasured sensor voids (recorded as $0$ or non-finite values) from contaminating valid depth readings, we construct a binary indicator mask:
-$$\mathbf{M}(p) = \begin{cases} 1, & \text{if } \mathbf{D}_{\text{in}}(p) > 0 \text{ and } \mathbf{D}_{\text{in}}(p) \text{ is finite and } \text{lo} \le \mathbf{D}_{\text{in}}(p) \le \text{hi} \\ 0, & \text{otherwise} \end{cases}$$
+
+$$
+\mathbf{M}(p) = \begin{cases} 
+1, & \text{if } \mathbf{D}_{\text{in}}(p) > 0 \text{ and } \mathbf{D}_{\text{in}}(p) \text{ is finite and } \text{lo} \le \mathbf{D}_{\text{in}}(p) \le \text{hi} \\ 
+0, & \text{otherwise} 
+\end{cases}
+$$
 
 ### 2.3 Mask-Aware Normalized Spatial Interpolation
 When upsampling the sparse or low-resolution depth grid to target resolution $(H, W)$, naive convolution computes $\sum w_i D_i$. In DepthLab AI, we compute normalized, validity-weighted interpolation:
-$$\hat{\mathbf{D}}_{\text{interp}}(p) = \frac{\sum_{q \in \mathcal{N}(p)} w(p, q) \cdot \mathbf{M}(q) \cdot \mathbf{D}_{\text{in}}(q)}{\sum_{q \in \mathcal{N}(p)} w(p, q) \cdot \mathbf{M}(q) + \epsilon}$$
+
+$$
+\hat{\mathbf{D}}_{\text{interp}}(p) = \frac{\sum_{q \in \mathcal{N}(p)} w(p, q) \cdot \mathbf{M}(q) \cdot \mathbf{D}_{\text{in}}(q)}{\sum_{q \in \mathcal{N}(p)} w(p, q) \cdot \mathbf{M}(q) + \epsilon}
+$$
+
 where:
 - $\mathcal{N}(p)$ represents the local interpolation neighbourhood of target pixel $p$.
 - $w(p, q)$ denotes the spatial kernel weight (e.g., bilinear area weights or bicubic cubic spline weights).
@@ -80,46 +90,92 @@ DepthLab AI incorporates two classical edge-aware algorithms:
 
 #### 1. Guided Filtering (He et al.)
 Guided filtering models the output depth $\mathbf{D}_{\text{filt}}$ as a local linear transform of the grayscale guidance image $\mathbf{I}_{\text{gray}}$ within a local square window $\omega_k$ of radius $r$:
-$$\mathbf{D}_{\text{filt}}(i) = a_k \mathbf{I}_{\text{gray}}(i) + b_k, \quad \forall i \in \omega_k$$
+
+$$
+\mathbf{D}_{\text{filt}}(i) = a_k \mathbf{I}_{\text{gray}}(i) + b_k, \quad \forall i \in \omega_k
+$$
+
 The coefficients $a_k$ and $b_k$ minimize the regularized squared error:
-$$E(a_k, b_k) = \sum_{i \in \omega_k} \left( (a_k \mathbf{I}_{\text{gray}}(i) + b_k - \hat{\mathbf{D}}_{\text{interp}}(i))^2 + \lambda a_k^2 \right)$$
+
+$$
+E(a_k, b_k) = \sum_{i \in \omega_k} \left( (a_k \mathbf{I}_{\text{gray}}(i) + b_k - \hat{\mathbf{D}}_{\text{interp}}(i))^2 + \lambda a_k^2 \right)
+$$
+
 Solving analytically:
-$$a_k = \frac{\frac{1}{|\omega|} \sum_{i \in \omega_k} \mathbf{I}_{\text{gray}}(i) \hat{\mathbf{D}}_{\text{interp}}(i) - \mu_k \bar{D}_k}{\sigma_k^2 + \lambda}$$
-$$b_k = \bar{D}_k - a_k \mu_k$$
+
+$$
+a_k = \frac{\frac{1}{|\omega|} \sum_{i \in \omega_k} \mathbf{I}_{\text{gray}}(i) \hat{\mathbf{D}}_{\text{interp}}(i) - \mu_k \bar{D}_k}{\sigma_k^2 + \lambda}
+$$
+
+$$
+b_k = \bar{D}_k - a_k \mu_k
+$$
+
 where $\mu_k$ and $\sigma_k^2$ are the mean and variance of $\mathbf{I}_{\text{gray}}$ in $\omega_k$, $\bar{D}_k$ is the mean of $\hat{\mathbf{D}}_{\text{interp}}$ in $\omega_k$, and $\lambda$ is the regularization parameter penalizing large gradients. The final value at pixel $i$ is obtained by averaging coefficients over all windows overlapping $i$:
-$$\mathbf{D}_{\text{filt}}(i) = \bar{a}_i \mathbf{I}_{\text{gray}}(i) + \bar{b}_i$$
+
+$$
+\mathbf{D}_{\text{filt}}(i) = \bar{a}_i \mathbf{I}_{\text{gray}}(i) + \bar{b}_i
+$$
 
 #### 2. Joint Bilateral Filtering (JBF)
 The joint bilateral filter blends spatial proximity with photometric similarity between guidance color pixels:
-$$\mathbf{D}_{\text{JBF}}(p) = \frac{1}{W_p} \sum_{q \in \Omega_r(p)} G_{\sigma_s}(\|p - q\|) \cdot G_{\sigma_r}(\|\mathbf{I}(p) - \mathbf{I}(q)\|) \cdot \hat{\mathbf{D}}_{\text{interp}}(q)$$
+
+$$
+\mathbf{D}_{\text{JBF}}(p) = \frac{1}{W_p} \sum_{q \in \Omega_r(p)} G_{\sigma_s}(\|p - q\|) \cdot G_{\sigma_r}(\|\mathbf{I}(p) - \mathbf{I}(q)\|) \cdot \hat{\mathbf{D}}_{\text{interp}}(q)
+$$
+
 where $G_\sigma(x) = \exp\left(-\frac{x^2}{2\sigma^2}\right)$, $\sigma_s$ controls spatial distance falloff, $\sigma_r$ controls color similarity decay, and $W_p$ is the normalizing factor:
-$$W_p = \sum_{q \in \Omega_r(p)} G_{\sigma_s}(\|p - q\|) \cdot G_{\sigma_r}(\|\mathbf{I}(p) - \mathbf{I}(q)\|)$$
+
+$$
+W_p = \sum_{q \in \Omega_r(p)} G_{\sigma_s}(\|p - q\|) \cdot G_{\sigma_r}(\|\mathbf{I}(p) - \mathbf{I}(q)\|)
+$$
 
 ### 2.5 Dual-Evidence Discontinuity Extraction (Texture Suppression)
 To avoid transferring non-geometric photometric patterns (wallpaper, wood grain) into the depth map, DepthLab AI calculates dual evidence:
 1. **Depth Gradient Magnitude:** Using the $3 \times 3$ horizontal and vertical Sobel operators:
-   $$\nabla_D(p) = \sqrt{\left(\mathbf{K}_x * \hat{\mathbf{D}}_{\text{interp}}\right)(p)^2 + \left(\mathbf{K}_y * \hat{\mathbf{D}}_{\text{interp}}\right)(p)^2}$$
+   $$
+   \nabla_D(p) = \sqrt{\left(\mathbf{K}_x * \hat{\mathbf{D}}_{\text{interp}}\right)(p)^2 + \left(\mathbf{K}_y * \hat{\mathbf{D}}_{\text{interp}}\right)(p)^2}
+   $$
 2. **RGB Luminance Gradient Magnitude:**
-   $$\nabla_I(p) = \sqrt{\left(\mathbf{K}_x * \mathbf{I}_{\text{gray}}\right)(p)^2 + \left(\mathbf{K}_y * \mathbf{I}_{\text{gray}}\right)(p)^2}$$
+   $$
+   \nabla_I(p) = \sqrt{\left(\mathbf{K}_x * \mathbf{I}_{\text{gray}}\right)(p)^2 + \left(\mathbf{K}_y * \mathbf{I}_{\text{gray}}\right)(p)^2}
+   $$
 3. **Discontinuity Agreement Criterion:** An edge is confirmed as a true geometric discontinuity only where depth gradients exceed the 90th percentile threshold $\tau_D$. RGB edges without depth gradient support are actively suppressed:
-   $$\mathbf{B}_{\text{edge}}(p) = \begin{cases} 1, & \text{if } \nabla_D(p) \ge \tau_D \text{ and } \nabla_I(p) \ge \tau_I \\ 0, & \text{otherwise} \end{cases}$$
+   $$
+   \mathbf{B}_{\text{edge}}(p) = \begin{cases} 
+   1, & \text{if } \nabla_D(p) \ge \tau_D \text{ and } \nabla_I(p) \ge \tau_I \\ 
+   0, & \text{otherwise} 
+   \end{cases}
+   $$
 
 ### 2.6 Spatial Confidence-Aware Hybrid Fusion
 The fusion engine dynamically weights classical structural filtering versus deep learned features:
 1. **Spatial Depth Confidence Map:**
-   $$\mathbf{C}(p) = \exp\left(-\gamma \cdot \frac{\nabla_D(p)}{\max(\nabla_D) + \epsilon}\right)$$
+   $$
+   \mathbf{C}(p) = \exp\left(-\gamma \cdot \frac{\nabla_D(p)}{\max(\nabla_D) + \epsilon}\right)
+   $$
    Where depth gradients are high (sharp object contours), $\mathbf{C}(p) \to 0$, indicating low confidence for unconstrained neural prediction and high risk of flying pixels. Where depth gradients are low (smooth planar walls or floors), $\mathbf{C}(p) \to 1$.
 2. **Effective Neural Weight:**
-   $$\alpha_{\text{eff}}(p) = \alpha_{\text{user}} \cdot \mathbf{C}(p)$$
+   $$
+   \alpha_{\text{eff}}(p) = \alpha_{\text{user}} \cdot \mathbf{C}(p)
+   $$
    where $\alpha_{\text{user}} \in [0, 1]$ is the user-configured baseline weight from the interactive UI slider (default: $0.5$).
 3. **Adaptive Convex Combination:**
-   $$\mathbf{D}_{\text{hybrid}}(p) = (1 - \alpha_{\text{eff}}(p)) \cdot \mathbf{D}_{\text{classical}}(p) + \alpha_{\text{eff}}(p) \cdot \mathbf{D}_{\text{deep}}(p)$$
+   $$
+   \mathbf{D}_{\text{hybrid}}(p) = (1 - \alpha_{\text{eff}}(p)) \cdot \mathbf{D}_{\text{classical}}(p) + \alpha_{\text{eff}}(p) \cdot \mathbf{D}_{\text{deep}}(p)
+   $$
    - On geometric boundaries: $\alpha_{\text{eff}} \approx 0 \implies \mathbf{D}_{\text{hybrid}} \approx \mathbf{D}_{\text{classical}}$ (crisp edge preservation).
    - In smooth regions: $\alpha_{\text{eff}} \approx \alpha_{\text{user}} \implies \mathbf{D}_{\text{hybrid}}$ benefits from neural global regularization.
 
 ### 2.7 Observation Preservation Locking
 Finally, sensor fidelity is strictly enforced. For every pixel where the physical sensor provided a valid depth reading, the reconstructed value is reset to the observed input:
-$$\mathbf{D}_{\text{final}}(p) = \begin{cases} \mathbf{D}_{\text{in}}(p), & \text{if } \mathbf{M}(p) = 1 \\ \mathbf{D}_{\text{hybrid}}(p), & \text{if } \mathbf{M}(p) = 0 \end{cases}$$
+
+$$
+\mathbf{D}_{\text{final}}(p) = \begin{cases} 
+\mathbf{D}_{\text{in}}(p), & \text{if } \mathbf{M}(p) = 1 \\ 
+\mathbf{D}_{\text{hybrid}}(p), & \text{if } \mathbf{M}(p) = 0 
+\end{cases}
+$$
 
 ---
 
@@ -206,7 +262,7 @@ flowchart TD
 
 ## 4. Deep Learning Network Architecture (DepthRefineNet)
 
-DepthLab AI includes a custom, purpose-built deep neural network: **DepthRefineNet**, implemented in [`src/model.py`](file:///d:/DepthLab_AI_Final/depthlab_ai/src/model.py).
+DepthLab AI includes a custom, purpose-built deep neural network: **DepthRefineNet**, implemented in [`src/model.py`](src/model.py).
 
 ```
                       DEPTHREFINENET (RESIDUAL CNN U-NET)
@@ -253,7 +309,11 @@ Input (5 channels: R, G, B, Depth, Mask) [B, 5, H, W]
    - **Channel 4:** Binary observation validity mask $M(x,y) \in \{0, 1\}$. Explicitly informs the network which spatial pixels are direct physical measurements versus interpolated values.
 2. **Residual Formulation:**
    Instead of predicting absolute metric depth directly (which often causes global scale drift), the network predicts a high-frequency **geometric depth residual** $\Delta \mathbf{D}$:
-   $$\mathbf{D}_{\text{deep}} = \hat{\mathbf{D}}_{\text{interp}} + \Delta \mathbf{D}$$
+
+   $$
+   \mathbf{D}_{\text{deep}} = \hat{\mathbf{D}}_{\text{interp}} + \Delta \mathbf{D}
+   $$
+
    This allows the network to focus exclusively on restoring sharp step-edges and filling subtle surface variations.
 3. **Group Normalization (GN) instead of Batch Normalization (BN):**
    In depth reconstruction, batch sizes during training and inference are often small ($B = 1$ to $4$). Batch Normalization fails at small batch sizes because batch statistics fluctuate wildly. We use Group Normalization with 8 groups, computing statistics across channels independently of batch size.
@@ -266,7 +326,11 @@ Input (5 channels: R, G, B, Depth, Mask) [B, 5, H, W]
 
 ### 4.2 Multi-Scale Training Objective
 The model is trained using a multi-scale composite loss:
-$$\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{L1}} + \beta \mathcal{L}_{\text{gradient}}$$
+
+$$
+\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{L1}} + \beta \mathcal{L}_{\text{gradient}}
+$$
+
 where:
 - $\mathcal{L}_{\text{L1}} = \frac{1}{\sum \mathbf{M}_{\text{GT}}} \sum_{p} \mathbf{M}_{\text{GT}}(p) \cdot |\mathbf{D}_{\text{pred}}(p) - \mathbf{D}_{\text{GT}}(p)|$ enforces metric depth accuracy over valid ground-truth pixels.
 - $\mathcal{L}_{\text{gradient}} = \frac{1}{\sum \mathbf{M}_{\text{GT}}} \sum_p \mathbf{M}_{\text{GT}}(p) \cdot \left( \|\nabla_x \mathbf{D}_{\text{pred}}(p) - \nabla_x \mathbf{D}_{\text{GT}}(p)\| + \|\nabla_y \mathbf{D}_{\text{pred}}(p) - \nabla_y \mathbf{D}_{\text{GT}}(p)\| \right)$ forces the predicted depth gradients to match the true geometric boundaries, eliminating edge blurring.
@@ -303,11 +367,15 @@ A standout contribution of DepthLab AI is its integrated **50-Scene Benchmark Su
 
 ### 5.2 Dataset Conversion & Validation Scripts
 All dataset ingestion scripts follow strict data integrity protocols:
-1. [`prepare_nyu.py`](file:///d:/DepthLab_AI_Final/depthlab_ai/prepare_nyu.py): Reads the official MATLAB v7.3 HDF5 archive `nyu_depth_v2_labeled.mat`. Inspects array dimensions, verifies that depth matrices are in metres, flips orientations to align with RGB images, and creates clean NumPy `.npy` arrays.
-2. [`prepare_kitti.py`](file:///d:/DepthLab_AI_Final/depthlab_ai/prepare_kitti.py): Pairs RGB camera frames with annotated LiDAR ground truth. Correctly decodes the official KITTI 16-bit uint16 format:
-   $$\text{Depth (metres)} = \frac{\text{uint16\_value}}{256.0}$$
-3. [`prepare_middlebury.py`](file:///d:/DepthLab_AI_Final/depthlab_ai/prepare_middlebury.py): Inventories high-resolution Portable Float Map (`.pfm`) disparity maps and extracts camera baseline $B$ and focal length $f$ from `calib.txt` to calculate metric depth via $Z = \frac{f \cdot B}{d}$.
-4. [`create_custom_depth_pair.py`](file:///d:/DepthLab_AI_Final/depthlab_ai/create_custom_depth_pair.py): A custom zero-dependency utility that allows users to convert any personal photo into an aligned test pair: a clean RGB image, a $4\times$ low-resolution depth map, and a synthetic sparse LiDAR map with realistic noise voids.
+1. [`prepare_nyu.py`](prepare_nyu.py): Reads the official MATLAB v7.3 HDF5 archive `nyu_depth_v2_labeled.mat`. Inspects array dimensions, verifies that depth matrices are in metres, flips orientations to align with RGB images, and creates clean NumPy `.npy` arrays.
+2. [`prepare_kitti.py`](prepare_kitti.py): Pairs RGB camera frames with annotated LiDAR ground truth. Correctly decodes the official KITTI 16-bit uint16 format:
+
+   $$
+   \text{Depth (metres)} = \frac{\text{uint16\_value}}{256.0}
+   $$
+
+3. [`prepare_middlebury.py`](prepare_middlebury.py): Inventories high-resolution Portable Float Map (`.pfm`) disparity maps and extracts camera baseline $B$ and focal length $f$ from `calib.txt` to calculate metric depth via $Z = \frac{f \cdot B}{d}$.
+4. [`create_custom_depth_pair.py`](create_custom_depth_pair.py): A custom zero-dependency utility that allows users to convert any personal photo into an aligned test pair: a clean RGB image, a $4\times$ low-resolution depth map, and a synthetic sparse LiDAR map with realistic noise voids.
 
 ---
 
@@ -317,16 +385,32 @@ All dataset ingestion scripts follow strict data integrity protocols:
 All metrics are evaluated exclusively over valid ground-truth pixels ($\mathbf{M}_{\text{GT}}(p) = 1$):
 
 1. **Root Mean Square Error (RMSE) in metres:**
-   $$\text{RMSE} = \sqrt{\frac{1}{|\Omega_{\text{valid}}|} \sum_{p \in \Omega_{\text{valid}}} \left( \mathbf{D}_{\text{pred}}(p) - \mathbf{D}_{\text{GT}}(p) \right)^2}$$
+   $$
+   \text{RMSE} = \sqrt{\frac{1}{|\Omega_{\text{valid}}|} \sum_{p \in \Omega_{\text{valid}}} \left( \mathbf{D}_{\text{pred}}(p) - \mathbf{D}_{\text{GT}}(p) \right)^2}
+   $$
+
 2. **Mean Absolute Error (MAE) in metres:**
-   $$\text{MAE} = \frac{1}{|\Omega_{\text{valid}}|} \sum_{p \in \Omega_{\text{valid}}} \left| \mathbf{D}_{\text{pred}}(p) - \mathbf{D}_{\text{GT}}(p) \right|$$
+   $$
+   \text{MAE} = \frac{1}{|\Omega_{\text{valid}}|} \sum_{p \in \Omega_{\text{valid}}} \left| \mathbf{D}_{\text{pred}}(p) - \mathbf{D}_{\text{GT}}(p) \right|
+   $$
+
 3. **Peak Signal-to-Noise Ratio (PSNR) in dB:** Evaluated with fixed metric range $\text{MAX}_I = \text{hi} - \text{lo}$:
-   $$\text{PSNR} = 10 \cdot \log_{10} \left( \frac{(\text{MAX}_I)^2}{\text{MSE}} \right)$$
+   $$
+   \text{PSNR} = 10 \cdot \log_{10} \left( \frac{(\text{MAX}_I)^2}{\text{MSE}} \right)
+   $$
+
 4. **Structural Similarity Index (SSIM):** Evaluates local luminance, contrast, and structural correlation over valid spatial windows:
-   $$\text{SSIM}(x, y) = \frac{(2\mu_x\mu_y + c_1)(2\sigma_{xy} + c_2)}{(\mu_x^2 + \mu_y^2 + c_1)(\sigma_x^2 + \sigma_y^2 + c_2)}$$
+   $$
+   \text{SSIM}(x, y) = \frac{(2\mu_x\mu_y + c_1)(2\sigma_{xy} + c_2)}{(\mu_x^2 + \mu_y^2 + c_1)(\sigma_x^2 + \sigma_y^2 + c_2)}
+   $$
+
 5. **High-Frequency Edge F1 Score:** Compares binarized Sobel depth edges of prediction against ground-truth edges using precision and recall:
-   $$\text{Precision} = \frac{|E_{\text{pred}} \cap E_{\text{GT}}|}{|E_{\text{pred}}|}, \quad \text{Recall} = \frac{|E_{\text{pred}} \cap E_{\text{GT}}|}{|E_{\text{GT}}|}, \quad F_1 = \frac{2 \cdot \text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}}$$
+   $$
+   \text{Precision} = \frac{|E_{\text{pred}} \cap E_{\text{GT}}|}{|E_{\text{pred}}|}, \quad \text{Recall} = \frac{|E_{\text{pred}} \cap E_{\text{GT}}|}{|E_{\text{GT}}|}, \quad F_1 = \frac{2 \cdot \text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}}
+   $$
+
 6. **2-Pixel Tolerance Boundary F1 ($\text{Boundary\_F1}_{2\text{px}}$):** Relaxes the exact matching criterion by allowing a 2-pixel spatial dilation tolerance around ground-truth boundaries to account for sub-pixel sensor calibration shifts.
+
 7. **Boundary-Region MAE vs Non-Boundary MAE:** Splits the evaluation into:
    - **Boundary Band:** A $5 \times 5$ morphological dilation around ground-truth depth edges.
    - **Non-Boundary Region:** The remaining planar/smooth areas.
@@ -334,7 +418,7 @@ All metrics are evaluated exclusively over valid ground-truth pixels ($\mathbf{M
 
 ### 6.2 Empirical Benchmark Ablation Results (NYU Depth V2 Test Split)
 
-The table below summarizes official results across multi-scale upsampling ($2\times$, $4\times$, $8\times$) on the held-out test split (from [`eval_P4_T04.md`](file:///d:/DepthLab_AI_Final/depthlab_ai/eval_P4_T04.md)):
+The table below summarizes official results across multi-scale upsampling ($2\times$, $4\times$, $8\times$) on the held-out test split (from [`eval_P4_T04.md`](eval_P4_T04.md)):
 
 | Scale | Method | Pipeline Stage | RMSE (m) ↓ | MAE (m) ↓ | PSNR (dB) ↑ | SSIM ↑ | Edge F1 ↑ | Boundary F1 (2px) ↑ | Boundary MAE (m) ↓ | Non-Boundary MAE (m) ↓ | Latency (ms) |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -395,7 +479,7 @@ DepthLab AI includes a modern web-based research studio designed for interactive
    - Takes users through all 8 platform sections before execution.
    - Features fixed-viewport docking, spotlight focus boxes (`.tour-spotlight-active`), keyboard shortcuts (`Escape` to dismiss, `ArrowRight`/`Enter` for next step), and click-outside backdrop dismissal.
 2. **Interactive 50-Scene Benchmark Gallery (`#gallery`):**
-   - Loads dynamically from [`web/presets/gallery_manifest.json`](file:///d:/DepthLab_AI_Final/depthlab_ai/web/presets/gallery_manifest.json).
+   - Loads dynamically from [`web/presets/gallery_manifest.json`](web/presets/gallery_manifest.json).
    - Allows instant keyword searching across all 50 scenes (e.g., typing *"living room"*, *"velodyne"*, *"car"*, *"stereo"*, or *"kinect"*).
    - Category filter pills for **All (50)**, **NYU Indoor (25)**, **KITTI LiDAR (15)**, and **Middlebury Stereo (10)**.
    - 1-click execution: clicking any card immediately stages the scene and triggers real-time reconstruction.

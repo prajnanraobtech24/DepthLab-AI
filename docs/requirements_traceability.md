@@ -32,10 +32,10 @@ Source: *Computer Vision Hackathon 2026.pdf*, Problem Statement 4 and Instructio
 | P4-EXTRA | KNN baseline requested by team; not named in P4 PDF mandatory list | RGB-aware local KNN in `src/classical.py` | KNN output, unit tests and comparative row | Code present; benchmark pending |
 | DEL-1 | Live hosted application URL | Docker/FastAPI deployment | Public URL opens on phone/laptop | Team deployment pending |
 | DEL-2 | GitHub repository with complete source code | Project repository | Public repository URL and clean clone test | Team push pending |
-| DEL-3 | System architecture diagram | `docs/architecture.md` | Diagram matches final code | Draft present; final review pending |
-| DEL-4 | Design document | `docs/design_document.md` | Required sections and final methodology | Draft present; final results update pending |
+| DEL-3 | System architecture diagram | `docs/system_architecture_diagram.md` | Diagram matches final code | Complete in `docs/system_architecture_diagram.md` |
+| DEL-4 | Design document | `docs/design_document.md` | Required sections and final methodology | Complete in `docs/design_document.md` |
 | DEL-5 | Comparative evaluation file; filename format `eval_P4_T04.md`; first line all USNs comma-separated | `eval_P4_T04.md` | Correct team ID (T04), comma-separated USNs on line 1, and actual measured metrics | Verified and present in root |
-| DEL-6 | Ablation study and failure-case analysis | `docs/failure_analysis.md` | Ablation table and three documented physical failure cases | Complete in `docs/failure_analysis.md` |
+| DEL-6 | Ablation study and failure-case analysis | `docs/ablation_study_and_failure_case_analysis.md` | Ablation table and four documented physical failure cases | Complete in `docs/ablation_study_and_failure_case_analysis.md` |
 
 ## Source-derived scope notes
 - KNN is **not explicitly named** in the P4 mandatory technical requirements in the supplied PDF. It is included as an additional requested baseline.

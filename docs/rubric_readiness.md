@@ -22,12 +22,12 @@ The instruction sheet has a prose sentence about “each of the other five crite
 ## Submission evidence checklist
 - [ ] Public hosted application URL tested from a phone and laptop.
 - [ ] GitHub repository contains complete source code.
-- [x] Architecture diagram reflects the deployed code (`docs/architecture.md` and visual UI diagram).
+- [x] Architecture diagram reflects the deployed code (`docs/system_architecture_diagram.md` and visual UI diagram).
 - [x] Design document covers problem, design, methodology, datasets, evaluation, limitations and ethics (`docs/design_document.md`).
 - [x] `eval_P4_T04.md` has all USNs comma-separated on its first line (1RUA24CSE0243,1RUA24CSE0263,1RUA24CSE0270,1RUA24CSE0308) and actual metrics in P4 metric order.
 - [x] Comparative results: interpolation, classical, CNN and hybrid; include the team's additional KNN baseline.
-- [x] Ablation study with actual values.
-- [x] At least three observed failure cases with mathematical causes and mitigations (`docs/failure_analysis.md`).
+- [x] Ablation study with actual values (`docs/ablation_study_and_failure_case_analysis.md`).
+- [x] Four observed failure cases with mathematical causes and mitigations (`docs/ablation_study_and_failure_case_analysis.md`).
 - [ ] README commands reproduce preparation, training and evaluation.
 - [ ] No raw dataset, credentials or fabricated results in GitHub.
 
