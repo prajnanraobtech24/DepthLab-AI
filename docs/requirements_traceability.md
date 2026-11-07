@@ -34,8 +34,8 @@ Source: *Computer Vision Hackathon 2026.pdf*, Problem Statement 4 and Instructio
 | DEL-2 | GitHub repository with complete source code | Project repository | Public repository URL and clean clone test | Team push pending |
 | DEL-3 | System architecture diagram | `docs/architecture.md` | Diagram matches final code | Draft present; final review pending |
 | DEL-4 | Design document | `docs/design_document.md` | Required sections and final methodology | Draft present; final results update pending |
-| DEL-5 | Comparative evaluation file; filename format `eval_P4_TeamID.md`; first line all USNs comma-separated | Root evaluation Markdown | Correct team ID, USNs and actual measured metrics | Template present; team details/results pending |
-| DEL-6 | Ablation study and failure-case analysis | Evaluation scripts and `docs/failure_analysis_template.md` | Ablation table and at least three observed failures | Scripts/template present; experiments pending |
+| DEL-5 | Comparative evaluation file; filename format `eval_P4_T04.md`; first line all USNs comma-separated | `eval_P4_T04.md` | Correct team ID (T04), comma-separated USNs on line 1, and actual measured metrics | Verified and present in root |
+| DEL-6 | Ablation study and failure-case analysis | `docs/failure_analysis.md` | Ablation table and three documented physical failure cases | Complete in `docs/failure_analysis.md` |
 
 ## Source-derived scope notes
 - KNN is **not explicitly named** in the P4 mandatory technical requirements in the supplied PDF. It is included as an additional requested baseline.

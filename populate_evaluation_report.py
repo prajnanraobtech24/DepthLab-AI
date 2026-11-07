@@ -1,4 +1,4 @@
-"""Generate populated eval_P4_TeamID.md and eval_P4_T01.md from measured JSON results."""
+"""Generate populated eval_P4_T04.md from measured JSON results."""
 import json
 from pathlib import Path
 
@@ -49,7 +49,7 @@ def main():
     }
 
     doc = []
-    doc.append("USN_1,USN_2,USN_3,USN_4\n")
+    doc.append("1RUA24CSE0243,1RUA24CSE0263,1RUA24CSE0270,1RUA24CSE0308\n")
     doc.append("# P4 Comparative Evaluation — Team DepthLab AI\n")
     doc.append(f"**Dataset:** NYU Depth V2 labelled test split ({nyu_data.get('n_test_samples', 10)} held-out samples)  ")
     doc.append("**Depth range:** 0.1–10.0 m (strictly preserved physical metric scale)  ")
@@ -203,11 +203,9 @@ def main():
     doc.append("- **Limitations & Ethics:** Reconstructed depth maps are computational estimates and should not be used as safety-critical automotive collision avoidance without redundant multi-sensor certification.")
 
     text = "\n".join(doc)
-    with open("eval_P4_TeamID.md", "w", encoding="utf-8") as f:
+    with open("eval_P4_T04.md", "w", encoding="utf-8") as f:
         f.write(text)
-    with open("eval_P4_T01.md", "w", encoding="utf-8") as f:
-        f.write(text)
-    print("Successfully generated eval_P4_TeamID.md and eval_P4_T01.md!")
+    print("Successfully generated eval_P4_T04.md!")
 
 if __name__ == "__main__":
     main()

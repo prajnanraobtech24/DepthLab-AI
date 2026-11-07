@@ -189,7 +189,7 @@ Deploy the Docker image or Python app to a public host, then verify the URL from
 - [ ] Public GitHub repository with complete source code.
 - [ ] Architecture diagram matches the final code.
 - [ ] Design document has methodology, datasets, implementation, evaluation, limitations and ethics.
-- [ ] `eval_P4_TeamID.md`: first line contains all team USNs, comma-separated; replace all placeholders with real measured results.
+- [x] `eval_P4_T04.md`: first line contains all team USNs (`1RUA24CSE0243,1RUA24CSE0263,1RUA24CSE0270,1RUA24CSE0308`), comma-separated, followed by comprehensive comparative metrics across 2×, 4×, and 8× scales.
 - [ ] Comparative results for interpolation, classical, CNN and hybrid, including KNN baseline.
 - [ ] 2×/4×/8× results, MAE/RMSE, PSNR/SSIM, edge/boundary accuracy, latency and memory.
 - [ ] Ablation results: RGB off, mask off, classical-only, CNN-only and hybrid.

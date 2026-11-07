@@ -169,14 +169,34 @@ async function initGallery() {
   }
 }
 
-function renderGallery(filterCategory) {
+let currentGalleryCategory = 'all';
+let currentGalleryQuery = '';
+
+function renderGallery(filterCategory, query) {
+  if (filterCategory !== undefined) currentGalleryCategory = filterCategory;
+  if (query !== undefined) currentGalleryQuery = query.toLowerCase().trim();
+
   const grid = $('galleryGrid');
   if (!grid) return;
   grid.innerHTML = '';
   
-  const items = filterCategory === 'all' 
+  let items = currentGalleryCategory === 'all' 
     ? galleryData 
-    : galleryData.filter(item => item.category === filterCategory);
+    : galleryData.filter(item => item.category === currentGalleryCategory);
+
+  if (currentGalleryQuery) {
+    items = items.filter(item => 
+      (item.title && item.title.toLowerCase().includes(currentGalleryQuery)) ||
+      (item.dataset && item.dataset.toLowerCase().includes(currentGalleryQuery)) ||
+      (item.range && item.range.toLowerCase().includes(currentGalleryQuery)) ||
+      (item.id && item.id.toLowerCase().includes(currentGalleryQuery))
+    );
+  }
+
+  if (items.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:36px;font-family:var(--mono);font-size:11px;">No benchmark scenes match "${currentGalleryQuery}". Try clearing search or choosing another dataset.</div>`;
+    return;
+  }
 
   items.forEach(item => {
     const card = document.createElement('div');
@@ -228,6 +248,14 @@ document.querySelectorAll('#galleryFilters .filter-pill').forEach(btn => {
     renderGallery(btn.dataset.category);
   });
 });
+
+// Live Search Input for 50 scenes
+const gallerySearchInput = $('gallerySearch');
+if (gallerySearchInput) {
+  gallerySearchInput.addEventListener('input', e => {
+    renderGallery(undefined, e.target.value);
+  });
+}
 
 // Hero showcase specimen click
 const heroShowcase = $('heroShowcase');
@@ -634,3 +662,346 @@ $('downloadNpy').onclick = () => {
   for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
   downloadBlob(new Blob([bytes], { type: 'application/octet-stream' }), 'depthlab_refined_metres.npy');
 };
+
+const dlBoundary = $('downloadBoundary');
+if (dlBoundary) {
+  dlBoundary.onclick = () => {
+    if (!result || !result.boundary) {
+      toast('No edge boundary map available yet. Run reconstruction first.');
+      return;
+    }
+    fetch(result.boundary).then(r => r.blob()).then(b => downloadBlob(b, 'depthlab_edge_boundary_discontinuity.png'));
+    toast('Downloaded dual-evidence boundary map (.png)');
+  };
+}
+
+const dlReport = $('downloadReport');
+if (dlReport) {
+  dlReport.onclick = () => {
+    if (!result) {
+      toast('Run reconstruction first to generate an evaluation report.');
+      return;
+    }
+    const reportData = {
+      project: "DepthLab AI",
+      problem_statement: "ProbID - P4: Edge-Preserving Depth Map Upsampling and Refinement",
+      timestamp: new Date().toISOString(),
+      configuration: {
+        scale: result.scale,
+        mode: $('mode').value,
+        filter_method: $('method').value,
+        interpolation_baseline: $('interpolation').value,
+        alpha_slider: $('alpha').value + '%',
+        device: result.device,
+        input_type: result.input_kind,
+        colormap: result.colormap || $('colormapSetting').value
+      },
+      performance: {
+        latency_ms: result.latency_ms,
+        device: result.device,
+        valid_fraction: result.valid_fraction,
+        trained_checkpoint_active: result.trained
+      },
+      metrics: result.metrics || "N/A (Provide ground truth for reference error calculation)"
+    };
+    const jsonStr = JSON.stringify(reportData, null, 2);
+    downloadBlob(new Blob([jsonStr], { type: 'application/json' }), 'depthlab_evaluation_report.json');
+    toast('Downloaded evaluation audit report (.json)');
+  };
+}
+
+// =========================================================================
+// SIDEBAR ACTIVE LINK HIGHLIGHTING (ON CLICK & ON SCROLL)
+// =========================================================================
+const navLinks = document.querySelectorAll('.sidebar .nav');
+
+navLinks.forEach(link => {
+  link.addEventListener('click', (e) => {
+    const href = link.getAttribute('href');
+    if (href && href.startsWith('#')) {
+      e.preventDefault();
+      const targetId = href.substring(1);
+      const targetEl = $(targetId);
+      if (targetEl) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  });
+});
+
+// ScrollSpy: Automatically highlight active section in sidebar on scroll
+const spySections = [
+  { id: 'overview', linkHref: '#overview' },
+  { id: 'why-depth', linkHref: '#why-depth' },
+  { id: 'quicktour', linkHref: '#quicktour' },
+  { id: 'gallery', linkHref: '#gallery' },
+  { id: 'studio', linkHref: '#studio' },
+  { id: 'results', linkHref: '#studio' },
+  { id: 'methods', linkHref: '#methods' },
+  { id: 'evaluation', linkHref: '#evaluation' }
+];
+
+let scrollTimeout;
+window.addEventListener('scroll', () => {
+  clearTimeout(scrollTimeout);
+  scrollTimeout = setTimeout(() => {
+    const scrollPos = window.scrollY + 160;
+    for (let i = spySections.length - 1; i >= 0; i--) {
+      const sec = $(spySections[i].id);
+      if (sec && sec.offsetTop <= scrollPos) {
+        const targetHref = spySections[i].linkHref;
+        navLinks.forEach(link => {
+          link.classList.toggle('active', link.getAttribute('href') === targetHref);
+        });
+        break;
+      }
+    }
+  }, 25);
+}, { passive: true });
+
+// =========================================================================
+// LIGHT / DARK MODE THEME CONTROLLER
+// =========================================================================
+function setTheme(mode) {
+  if (mode === 'light') {
+    document.body.classList.add('light-mode');
+    localStorage.setItem('depthlab_theme', 'light');
+    if ($('themeIcon')) $('themeIcon').textContent = '🌙';
+    if ($('themeLabel')) $('themeLabel').textContent = 'Dark Mode';
+    if ($('sidebarThemeIndicator')) $('sidebarThemeIndicator').textContent = '☀️ Light Theme Active';
+  } else {
+    document.body.classList.remove('light-mode');
+    localStorage.setItem('depthlab_theme', 'dark');
+    if ($('themeIcon')) $('themeIcon').textContent = '☀️';
+    if ($('themeLabel')) $('themeLabel').textContent = 'Light Mode';
+    if ($('sidebarThemeIndicator')) $('sidebarThemeIndicator').textContent = '🌙 Dark Theme Active';
+  }
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('depthlab_theme') || 'dark';
+  setTheme(saved);
+  const toggleBtn = $('themeToggleBtn');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      const isLight = document.body.classList.contains('light-mode');
+      setTheme(isLight ? 'dark' : 'light');
+    });
+  }
+  const switchBtn = $('themeSwitchBtn');
+  if (switchBtn) {
+    switchBtn.addEventListener('click', () => {
+      const isLight = document.body.classList.contains('light-mode');
+      setTheme(isLight ? 'dark' : 'light');
+    });
+  }
+}
+initTheme();
+
+// =========================================================================
+// INTERACTIVE STEPWISE SPOTLIGHT TOUR (8 STEPS)
+// =========================================================================
+const TOUR_STEPS = [
+  {
+    targetId: 'overview',
+    scrollId: 'overview',
+    title: 'Step 1: System Overview & Platform',
+    desc: 'Welcome to DepthLab AI. An edge-aware depth completion & upsampling framework designed for P4: Robust Depth Reconstruction across indoor, outdoor LiDAR, and active stereo.'
+  },
+  {
+    targetId: 'why-depth',
+    scrollId: 'why-depth',
+    title: 'Step 2: Why Depth Matters & Core Concepts',
+    desc: 'Explore why depth upsampling is challenging: boundary tearing, sensor null returns, and texture-copying artifacts, and see the hybrid principles used to solve them.'
+  },
+  {
+    targetId: 'gallery',
+    scrollId: 'gallery',
+    title: 'Step 3: Dataset Explorer (50 Scenes)',
+    desc: 'Browse authentic paired scenes across NYU Depth V2, KITTI LiDAR, and Middlebury Stereo. Click any scene to stage it or use real-time keyword search.'
+  },
+  {
+    targetId: 'rgbDrop',
+    scrollId: 'rgbDrop',
+    title: 'Step 4: Dual-Stream Scene Uploads',
+    desc: 'Upload arbitrary unseen RGB guidance images and low-resolution or sparse depth maps (PNG, 16-bit uint16 mm, TIFF, NPY) with optional ground truth.'
+  },
+  {
+    targetId: 'scaleChoices',
+    scrollId: 'scaleChoices',
+    title: 'Step 5: Multi-Scale & Fusion Controls',
+    desc: 'Select 2×, 4×, or 8× upsampling factors, choose Guided or Joint Bilateral edge-preserving filters, and balance the classical-deep fusion weight (alpha slider).'
+  },
+  {
+    targetId: 'runBtn',
+    scrollId: 'runBtn',
+    title: 'Step 6: Run Reconstruction Lab',
+    desc: 'Execute real-time reconstruction in ~120 ms. Masked interpolation, structural edge filters, and residual U-Net run seamlessly in-memory.'
+  },
+  {
+    targetId: 'results',
+    scrollId: 'results',
+    title: 'Step 7: 2D Comparisons & 3D WebGL Studio',
+    desc: 'Compare baseline interpolation, KNN, classical filtering, and hybrid outputs side-by-side. Rotate, pan, and elevate the reconstructed scene in interactive 3D WebGL!'
+  },
+  {
+    targetId: 'evaluation',
+    scrollId: 'evaluation',
+    title: 'Step 8: Metric Audit & Research Exports',
+    desc: 'Audit exact physical errors in metres (RMSE, MAE, Boundary F1, PSNR, SSIM) against ground truth, and export lossless 16-bit metric PNG, raw .npy, boundary maps, or JSON.'
+  }
+];
+
+let currentTourStep = 0;
+let isTourActive = false;
+let tourTempUnhidResults = false;
+
+function startTour(stepIndex = 0) {
+  isTourActive = true;
+  currentTourStep = Math.max(0, Math.min(stepIndex, TOUR_STEPS.length - 1));
+  const backdrop = $('tourBackdrop');
+  const card = $('tourCard');
+  if (backdrop) backdrop.classList.add('active');
+  if (card) card.style.display = 'block';
+  showTourStep(currentTourStep);
+}
+
+function stopTour() {
+  isTourActive = false;
+  const backdrop = $('tourBackdrop');
+  const card = $('tourCard');
+  if (backdrop) backdrop.classList.remove('active');
+  if (card) card.style.display = 'none';
+  document.querySelectorAll('.tour-spotlight-active').forEach(el => el.classList.remove('tour-spotlight-active'));
+  if (tourTempUnhidResults && !result) {
+    const resSec = $('results');
+    if (resSec) resSec.hidden = true;
+    tourTempUnhidResults = false;
+  }
+}
+
+function showTourStep(index) {
+  currentTourStep = index;
+  const step = TOUR_STEPS[index];
+  if (!step) return;
+
+  // Clear previous spotlights
+  document.querySelectorAll('.tour-spotlight-active').forEach(el => el.classList.remove('tour-spotlight-active'));
+
+  // If results section is targeted but currently hidden, reveal it for demonstration
+  if (step.targetId === 'results' || step.scrollId === 'results') {
+    const resSec = $('results');
+    if (resSec && resSec.hidden) {
+      resSec.hidden = false;
+      tourTempUnhidResults = true;
+    }
+  }
+
+  const target = $(step.targetId);
+  const scrollTarget = $(step.scrollId) || target;
+  if (scrollTarget) {
+    scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  if (target) {
+    target.classList.add('tour-spotlight-active');
+  }
+
+  // Update card content
+  $('tourStepBadge').textContent = `STEP ${index + 1} OF ${TOUR_STEPS.length}`;
+  if ($('tourTitleText')) $('tourTitleText').textContent = step.title;
+  $('tourDesc').textContent = step.desc;
+
+  // Render dots matching Image 1
+  const dotsContainer = $('tourDots');
+  if (dotsContainer) {
+    dotsContainer.innerHTML = '';
+    TOUR_STEPS.forEach((_, i) => {
+      const dot = document.createElement('div');
+      dot.className = `tour-dot ${i === index ? 'active' : ''}`;
+      dot.onclick = () => showTourStep(i);
+      dotsContainer.appendChild(dot);
+    });
+  }
+
+  // Button labels
+  $('tourPrevBtn').style.visibility = index === 0 ? 'hidden' : 'visible';
+  $('tourNextBtn').textContent = index === TOUR_STEPS.length - 1 ? 'Finish Tour ✦' : 'Next Step →';
+
+  // Position card near target
+  setTimeout(() => positionTourCard(target), 200);
+}
+
+function positionTourCard(target) {
+  const card = $('tourCard');
+  if (!card) return;
+
+  if (!target) {
+    card.style.top = '50%';
+    card.style.left = '50%';
+    card.style.transform = 'translate(-50%, -50%)';
+    return;
+  }
+
+  card.style.transform = 'none';
+  const rect = target.getBoundingClientRect();
+  const cardWidth = 350;
+  const cardHeight = card.offsetHeight || 220;
+
+  let left = rect.left + (rect.width / 2) - (cardWidth / 2);
+  left = Math.max(20, Math.min(window.innerWidth - cardWidth - 20, left));
+
+  let top = rect.bottom + 16;
+  if (top + cardHeight > window.innerHeight - 20) {
+    top = Math.max(20, rect.top - cardHeight - 16);
+  }
+
+  card.style.left = `${left}px`;
+  card.style.top = `${top}px`;
+}
+
+// Wire tour controls
+if ($('tourCloseBtn')) $('tourCloseBtn').onclick = stopTour;
+if ($('tourBackdrop')) $('tourBackdrop').onclick = stopTour;
+if ($('tourPrevBtn')) $('tourPrevBtn').onclick = () => { if (currentTourStep > 0) showTourStep(currentTourStep - 1); };
+if ($('tourNextBtn')) $('tourNextBtn').onclick = () => {
+  if (currentTourStep < TOUR_STEPS.length - 1) {
+    showTourStep(currentTourStep + 1);
+  } else {
+    stopTour();
+    toast('Tour completed! You are ready to explore DepthLab AI.');
+  }
+};
+
+// Wire all Tour triggers (Sidebar, Topbar, and QuickTour main button)
+if ($('startTourSidebarBtn')) $('startTourSidebarBtn').onclick = () => startTour(0);
+if ($('startTourTopbarBtn')) $('startTourTopbarBtn').onclick = () => startTour(0);
+if ($('startTourMainBtn')) $('startTourMainBtn').onclick = () => startTour(0);
+
+// Keyboard navigation for Tour (Escape to exit, Arrow keys to navigate)
+window.addEventListener('keydown', (e) => {
+  if (!isTourActive) return;
+  if (e.key === 'Escape') stopTour();
+  else if (e.key === 'ArrowRight' || e.key === 'Enter') {
+    if (currentTourStep < TOUR_STEPS.length - 1) showTourStep(currentTourStep + 1);
+    else stopTour();
+  } else if (e.key === 'ArrowLeft' && currentTourStep > 0) {
+    showTourStep(currentTourStep - 1);
+  }
+});
+
+// Quick tour cards click to open corresponding step
+document.querySelectorAll('.tour-card[data-tour-step]').forEach(card => {
+  card.addEventListener('click', () => {
+    const step = parseInt(card.dataset.tourStep, 10);
+    startTour(isNaN(step) ? 0 : step);
+  });
+});
+
+window.addEventListener('resize', () => {
+  if (isTourActive) {
+    const target = $(TOUR_STEPS[currentTourStep].targetId);
+    positionTourCard(target);
+  }
+});

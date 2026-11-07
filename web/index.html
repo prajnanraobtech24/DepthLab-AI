@@ -12,45 +12,185 @@
 <body>
 <div class="shell">
 <aside class="sidebar">
-  <a class="brand" href="/"><span class="brand-mark">◈</span><span>depthlab<span class="brand-ai">.ai</span><small>COMPUTER VISION LAB</small></span></a>
-  <div class="nav-label">WORKSPACE</div>
-  <a class="nav active" href="#studio"><span>◫</span> Reconstruction studio</a>
-  <a class="nav" href="#quicktour"><span>✦</span> Quick tour & guide</a>
-  <a class="nav" href="#gallery"><span>▦</span> Benchmark gallery <span class="nav-count">50</span></a>
-  <a class="nav" href="#methods"><span>⌘</span> Methods & pipeline</a>
-  <a class="nav" href="#evaluation"><span>▥</span> Evaluation lab</a>
-  <div class="sidebar-bottom"><div class="status-dot online" id="serverDot"></div><div><b id="serverStatus">System Online</b><small>Local inference engine</small></div><span class="version">v2.0</span></div>
+  <a class="brand" href="/"><span class="brand-mark">◈</span><span>depthlab<span class="brand-ai">.ai</span><small>PHASE 4 DEPTH REFINEMENT</small></span></a>
+  
+  <div class="sidebar-status-pill">
+    <span class="status-dot online" id="serverDot"></span>
+    <span id="serverStatus">Model Ready (CPU)</span>
+  </div>
+
+  <div class="sidebar-theme-box">
+    <div class="theme-box-label">INTERFACE THEME</div>
+    <div class="theme-box-row">
+      <span id="sidebarThemeIndicator">🌙 Dark Theme Active</span>
+      <button class="theme-switch-btn" id="themeSwitchBtn">Switch</button>
+    </div>
+  </div>
+
+  <div class="nav-label">SECTIONS</div>
+  <a class="nav active" href="#overview"><span>⌂</span> Overview & Hero</a>
+  <a class="nav" href="#why-depth"><span>ⓘ</span> Why Depth Matters</a>
+  <a class="nav" href="#quicktour"><span>✦</span> How to Use (8 Steps)</a>
+  <a class="nav" href="#gallery"><span>▦</span> Dataset Explorer <span class="nav-count">50</span></a>
+  <a class="nav" href="#studio"><span>▷</span> Reconstruction Lab</a>
+  <a class="nav" href="#methods"><span>⌘</span> Concepts & Architecture</a>
+  <a class="nav" href="#evaluation"><span>▥</span> Benchmarks & Metrics</a>
+
+  <div class="sidebar-tour-action">
+    <button class="start-tour-pill-btn" id="startTourSidebarBtn">
+      <svg class="play-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#10b981" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <polygon points="10 8 16 12 10 16 10 8" fill="#10b981"></polygon>
+      </svg>
+      <span>Start Guided Tour</span>
+    </button>
+  </div>
+
+  <div class="sidebar-credentials">
+    <div class="cred-label">TEAM CREDENTIALS</div>
+    <div class="cred-grid">
+      <span>1RUA24CSE0243</span>
+      <span>1RUA24CSE0263</span>
+      <span>1RUA24CSE0270</span>
+      <span>1RUA24CSE0308</span>
+    </div>
+    <div class="cred-footer">
+      <a href="https://github.com/prajnanraobtech24/DepthLab-AI" target="_blank" rel="noopener noreferrer" class="github-link">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        <span>GitHub Repo</span>
+      </a>
+      <span class="version">v1.0.0</span>
+    </div>
+  </div>
 </aside>
 <main class="main">
 <header class="topbar">
   <div class="crumb">WORKSPACE <span>/</span> PROBID-P4 <span>/</span> EDGE RECONSTRUCTION</div>
-  <div class="top-right"><span class="live-pill"><i></i> SYSTEM LIVE</span><span class="avatar">P4</span></div>
+  <div class="top-right">
+    <button class="theme-toggle-btn" id="themeToggleBtn" title="Toggle Light / Dark Mode">
+      <span id="themeIcon">☀️</span>
+      <span id="themeLabel">Light Mode</span>
+    </button>
+    <button class="start-tour-pill-btn small-pill" id="startTourTopbarBtn">
+      <svg class="play-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#10b981" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <polygon points="10 8 16 12 10 16 10 8" fill="#10b981"></polygon>
+      </svg>
+      <span>Start Guided Tour</span>
+    </button>
+    <span class="live-pill"><i></i> SYSTEM LIVE</span>
+    <span class="avatar">P4</span>
+  </div>
 </header>
 
-<section class="hero" id="studio">
-  <div class="hero-copy">
-    <div class="eyebrow"><span class="eyebrow-line"></span> PS4 · EDGE-PRESERVING DEPTH RECONSTRUCTION</div>
-    <h1>See depth.<br><em>Keep the edges.</em></h1>
-    <p>Reconstruct dense, high-resolution 3D depth maps from low-resolution or sparse sensor measurements using boundary-aware hybrid intelligence.</p>
-    <div class="hero-tags"><span>RGB-GUIDED</span><span>2× / 4× / 8× SCALING</span><span>CLASSICAL + DEEP RESIDUAL</span><span>3D POINT CLOUD</span></div>
+<section class="hero-overview-section" id="overview">
+  <div class="hero-badge-strip">
+    <span class="hero-chip-pill"><span class="chip-dot">●</span> Computer Vision Research Platform</span>
+    <span class="hero-chip-pill meta">P4: Depth Upsampling & Refinement</span>
+    <span class="hero-chip-pill meta">1,308,610 Trainable Parameters</span>
   </div>
-  <div class="hero-art">
-    <div class="orb orb-a"></div><div class="orb orb-b"></div><div class="depth-grid"></div>
-    <div class="hero-showcase-card" id="heroShowcase" title="Click to load NYU Living Room showcase">
-      <div class="showcase-header">
-        <span class="showcase-live-tag">● LIVE SPECIMEN</span>
-        <span class="showcase-scale">4× HYBRID</span>
+
+  <div class="hero-two-col">
+    <div class="hero-left-content">
+      <h1 class="hero-title">
+        Reconstructing the Missing.<br>
+        <em>Preserving the Edges.</em>
+      </h1>
+      <p class="hero-desc">
+        An edge-aware, confidence-guided depth completion framework that transforms sparse and low-resolution depth measurements into refined, high-resolution depth representations with crisp geometric boundaries.
+      </p>
+
+      <div class="hero-feature-cards">
+        <div class="hfeat-card">
+          <div class="hfeat-icon">◐</div>
+          <div>
+            <b>Dual-Branch CNN</b>
+            <p>Simultaneously extracts high-frequency RGB photometric edges and depth geometry.</p>
+          </div>
+        </div>
+        <div class="hfeat-card">
+          <div class="hfeat-icon">✦</div>
+          <div>
+            <b>Confidence Solver</b>
+            <p>Structure-attenuated bilateral refinement prevents texture-copy artifacts.</p>
+          </div>
+        </div>
       </div>
-      <div class="showcase-viewport">
-        <img src="/assets/presets/nyu_01_thumb.png" alt="RGB vs Reconstructed Depth Split View">
-        <div class="showcase-scanline"></div>
-        <div class="showcase-split-badge">RGB ◄ ► DEPTH</div>
+
+      <div class="hero-cta-row">
+        <button class="hero-cta-btn primary" onclick="document.getElementById('studio').scrollIntoView({behavior:'smooth'})">
+          <span>Launch Reconstruction Lab</span>
+          <span>›</span>
+        </button>
+        <button class="hero-cta-btn secondary" onclick="document.getElementById('gallery').scrollIntoView({behavior:'smooth'})">
+          <span>Explore Dataset Gallery</span>
+        </button>
       </div>
-      <div class="showcase-footer">
-        <div class="showcase-hud-item"><span>EDGE F1</span><b>0.984</b></div>
-        <div class="showcase-hud-item"><span>RMSE</span><b>0.052 m</b></div>
-        <div class="showcase-hud-item"><span>LATENCY</span><b>1.2 s</b></div>
+    </div>
+
+    <div class="hero-right-demo">
+      <div class="hero-showcase-card" id="heroShowcase" title="Click to load Middlebury Artroom showcase">
+        <div class="showcase-header">
+          <span class="showcase-live-tag">● LIVE BOUNDARY COMPARISON DEMO</span>
+          <span class="showcase-scale">MIDDLEBURY 2021 (ARTROOM1)</span>
+        </div>
+        <div class="showcase-viewport">
+          <img src="/assets/presets/nyu_01_thumb.png" alt="RGB vs Reconstructed Depth Split View">
+          <div class="showcase-scanline"></div>
+          <div class="showcase-split-badge">RAW INPUT (4× LOW-RES) ◄ ► DEPTHLAB (REFINED)</div>
+        </div>
+        <div class="showcase-footer">
+          <div class="showcase-hud-item"><span>BOUNDARY F1</span><b>0.984</b></div>
+          <div class="showcase-hud-item"><span>RMSE</span><b>0.0276 m (Best)</b></div>
+          <div class="showcase-hud-item"><span>LATENCY</span><b>123 ms</b></div>
+        </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY DEPTH MATTERS & CONCEPTS USED -->
+<section class="why-depth-section" id="why-depth">
+  <div class="section-head">
+    <div>
+      <div class="eyebrow"><span class="eyebrow-line"></span> THE PHYSICS & GEOMETRIC CHALLENGE</div>
+      <h2>Why Depth Upsampling Matters & Concepts Used</h2>
+      <p>Standard color image super-resolution focuses on perceptual appearance; depth reconstruction demands exact physical metric distance and sharp geometric boundaries.</p>
+    </div>
+    <span class="step-count">FOUNDATIONS</span>
+  </div>
+
+  <div class="concepts-grid">
+    <div class="concept-card">
+      <div class="concept-num">01</div>
+      <div class="concept-icon">⚡</div>
+      <b>The Depth Discontinuity Problem</b>
+      <p>At foreground/background object boundaries (e.g., a chair leg against a wall 3 metres away), naive interpolation blends foreground with background. This creates artificial "flying pixels" and blurred rubber-sheet connections that destroy 3D point clouds.</p>
+      <div class="concept-badge">Boundary Tearing</div>
+    </div>
+
+    <div class="concept-card">
+      <div class="concept-num">02</div>
+      <div class="concept-icon">▤</div>
+      <b>Sensor Voids & Zero-Bleeding</b>
+      <p>LiDAR and structured light sensors (Kinect) produce 90–95% missing measurements and voids on reflective, glass, or specular surfaces. Naive filters bleed invalid zeros into real metric depths. DepthLab introduces strict <b>zero-bleed boolean validity masking</b>.</p>
+      <div class="concept-badge">Zero-Bleed Masking</div>
+    </div>
+
+    <div class="concept-card">
+      <div class="concept-num">03</div>
+      <div class="concept-icon">◐</div>
+      <b>The Texture-Copying Trap</b>
+      <p>When using an RGB image to guide depth upsampling, naive filters assume every color edge is a depth edge. On high-contrast flat surfaces (like wallpaper or carpet), color patterns get etched as false depth ridges. DepthLab employs <b>dual-evidence gating</b> to suppress texture bleed.</p>
+      <div class="concept-badge">Texture Suppression</div>
+    </div>
+
+    <div class="concept-card">
+      <div class="concept-num">04</div>
+      <div class="concept-icon">◈</div>
+      <b>Confidence-Adaptive Hybrid Fusion</b>
+      <p>DepthLab dynamically balances classical edge-preserving solvers (Guided & Joint Bilateral filtering) and deep learning (Residual U-Net). Classical filters dominate near validated geometric discontinuities, while the learned branch regularizes smooth continuous surfaces.</p>
+      <div class="concept-badge">Adaptive Hybridization</div>
     </div>
   </div>
 </section>
@@ -80,51 +220,68 @@
   <div class="section-head">
     <div>
       <div class="eyebrow"><span class="eyebrow-line"></span> QUICK TOUR & JUDGING GUIDE</div>
-      <h2>How to Explore DepthLab AI in 5 Simple Steps</h2>
+      <h2>How to Explore DepthLab AI in 6 Interactive Steps</h2>
       <p>Follow this guided workflow to evaluate edge preservation, model comparisons, 3D point cloud reconstruction, and physical metric fidelity.</p>
     </div>
-    <span class="step-count">GUIDE <b>—</b> 5 STEPS</span>
+    <div class="tour-head-actions">
+      <button class="start-tour-pill-btn" id="startTourMainBtn">
+        <svg class="play-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#10b981" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polygon points="10 8 16 12 10 16 10 8" fill="#10b981"></polygon>
+        </svg>
+        <span>Start Guided Tour</span>
+      </button>
+      <span class="step-count">GUIDE <b>—</b> 7 STEPS</span>
+    </div>
   </div>
 
   <div class="tour-grid">
-    <div class="tour-card" onclick="document.getElementById('gallery').scrollIntoView({behavior:'smooth'})">
+    <div class="tour-card" data-tour-step="0">
       <div class="tour-num">01</div>
-      <div class="tour-icon">▦</div>
-      <b>Pick from 50 Real Benchmark Scenes</b>
-      <p>Select any of the 50 pre-calibrated scenes across <b>NYU Depth V2</b> (indoor), <b>KITTI</b> (outdoor LiDAR), or <b>Middlebury</b> (macro stereo). 1-click loads all inputs.</p>
-      <div class="tour-action">Explore 50 Scenes ↓</div>
-    </div>
-
-    <div class="tour-card" onclick="document.getElementById('presetNYU').click()">
-      <div class="tour-num">02</div>
-      <div class="tour-icon">✦</div>
-      <b>Executive Tri-View & Proposed Model</b>
-      <p>Instantly compare the original <b>RGB guidance</b>, the degraded <b>Input Depth</b>, and the sharp <b>DepthLab Proposed</b> reconstruction in high-fidelity Turbo color.</p>
-      <div class="tour-action">Try Live Specimen ↗</div>
-    </div>
-
-    <div class="tour-card" onclick="document.getElementById('results').scrollIntoView({behavior:'smooth'})">
-      <div class="tour-num">03</div>
       <div class="tour-icon">⚡</div>
-      <b>Toggle ⚡ Edge Overlay & Colormaps</b>
-      <p>Flip the <b>⚡ Edge Overlay</b> switch to visualize dual-evidence Sobel depth boundaries in fluorescent cyan. Toggle between <b>Turbo, Viridis, Inferno, & Grayscale</b>.</p>
-      <div class="tour-action">View Colormaps ↓</div>
+      <b>1-Click Presets & Specimen</b>
+      <p>Load calibrated scenes across <b>NYU Depth V2</b>, <b>KITTI LiDAR</b>, or <b>Middlebury Stereo</b> with a single click.</p>
+      <div class="tour-action">Focus Presets ↗</div>
     </div>
 
-    <div class="tour-card" onclick="document.getElementById('tab3D').click();document.getElementById('results').scrollIntoView({behavior:'smooth'})">
+    <div class="tour-card" data-tour-step="1">
+      <div class="tour-num">02</div>
+      <div class="tour-icon">▦</div>
+      <b>50-Scene Benchmark Suite</b>
+      <p>Filter and search 50 real-world scenes with instant one-click pipeline execution.</p>
+      <div class="tour-action">Open Gallery ↗</div>
+    </div>
+
+    <div class="tour-card" data-tour-step="2">
+      <div class="tour-num">03</div>
+      <div class="tour-icon">▧</div>
+      <b>Custom Dual-Stream Uploads</b>
+      <p>Upload your own unseen RGB guide & sparse depth map. Supports PNG, 16-bit uint16 mm, TIFF, and NPY.</p>
+      <div class="tour-action">Inspect Uploads ↗</div>
+    </div>
+
+    <div class="tour-card" data-tour-step="3">
       <div class="tour-num">04</div>
-      <div class="tour-icon">◈</div>
-      <b>Spin in 3D WebGL Surface Mesh</b>
-      <p>Switch to the <b>Interactive 3D Studio</b>. Orbit, rotate, and elevate the reconstructed scene in Three.js as a textured surface mesh, wireframe, or point cloud.</p>
-      <div class="tour-action">Open 3D Studio ↗</div>
+      <div class="tour-icon">⌘</div>
+      <b>Multi-Scale & Fusion Controls</b>
+      <p>Switch between 2×, 4×, 8× scaling, select Guided or Joint Bilateral filtering, and tune hybrid alpha.</p>
+      <div class="tour-action">View Controls ↗</div>
     </div>
 
-    <div class="tour-card" onclick="document.getElementById('evaluation').scrollIntoView({behavior:'smooth'})">
+    <div class="tour-card" data-tour-step="4">
       <div class="tour-num">05</div>
+      <div class="tour-icon">◈</div>
+      <b>2D Comparisons & 3D Studio</b>
+      <p>Toggle fluorescent ⚡ edge overlays, split-screen comparison slider, or rotate in interactive 3D WebGL mesh.</p>
+      <div class="tour-action">Explore 3D Mesh ↗</div>
+    </div>
+
+    <div class="tour-card" data-tour-step="5">
+      <div class="tour-num">06</div>
       <div class="tour-icon">▥</div>
-      <b>Audit Physical Metrics & Export</b>
-      <p>Review exact quantitative errors in physical metres: <b>RMSE (m), MAE (m), Boundary F1, and SSIM</b>. Download lossless 16-bit PNG or scientific metric <code>.npy</code> files.</p>
-      <div class="tour-action">Inspect Metrics ↓</div>
+      <b>Metric Audit & Research Exports</b>
+      <p>Inspect physical errors in metres (RMSE, MAE, Boundary F1) and download 16-bit PNG, NPY, boundary, and JSON.</p>
+      <div class="tour-action">Audit Metrics ↗</div>
     </div>
   </div>
 </section>
@@ -138,6 +295,10 @@
       <p>Test the full pipeline across real indoor Kinect scenes (NYU-D V2), outdoor autonomous vehicle LiDAR (KITTI), and sub-millimetre industrial stereo (Middlebury). Click any scene to run live reconstruction.</p>
     </div>
     <div class="gallery-controls">
+      <div class="gallery-search-wrap">
+        <span class="gallery-search-icon">🔍</span>
+        <input type="text" id="gallerySearch" placeholder="Search 50 scenes by name, sensor, or environment...">
+      </div>
       <div class="gallery-filter-group" id="galleryFilters">
         <button class="filter-pill active" data-category="all">All Datasets (50)</button>
         <button class="filter-pill" data-category="indoor">NYU Indoor (25)</button>
@@ -241,11 +402,11 @@
       </div>
       <div class="triview-card proposed">
         <div class="triview-header">
-          <b>EdgeFuse-DCR Final Reconstruction</b>
+          <b>DepthLab-AI Final Reconstruction</b>
           <span class="triview-tag proposed">Proposed</span>
         </div>
         <div class="triview-viewport">
-          <img id="triviewProposed" alt="EdgeFuse-DCR proposed reconstruction">
+          <img id="triviewProposed" alt="DepthLab-AI proposed reconstruction">
           <canvas id="triviewEdgeCanvas" class="edge-overlay-canvas" hidden></canvas>
         </div>
       </div>
@@ -335,9 +496,11 @@
   <div class="warning" id="modelWarning" hidden>Deep learning weights are training. Classical output is safely applied.</div>
   
   <div class="download-row">
+    <button class="secondary-btn" id="downloadOutput">⬇ 16-Bit Metric Depth (.png)</button>
     <button class="secondary-btn" id="downloadNpy">⬇ Reconstructed Depth (.npy)</button>
     <button class="secondary-btn" id="downloadColorPreview">⬇ Colormap Preview (.png)</button>
-    <button class="secondary-btn" id="downloadOutput">⬇ 16-Bit Metric Depth (.png)</button>
+    <button class="secondary-btn" id="downloadBoundary">⬇ Edge Boundary Map (.png)</button>
+    <button class="secondary-btn" id="downloadReport">⬇ Audit Metrics Report (.json)</button>
   </div>
 </section>
 
@@ -392,22 +555,119 @@
 </section>
 
 <section class="methods-section" id="methods">
-  <div class="eyebrow">UNDER THE HOOD</div>
-  <h2>One problem. Multiple perspectives.</h2>
-  <div class="method-cards">
-    <div><span>01</span><b>Interpolation</b><p>Masked nearest, bilinear and bicubic baselines preventing invalid sample bleed.</p></div>
-    <div><span>02</span><b>Classical vision</b><p>RGB-guided and joint-bilateral filtering using structural co-occurrence.</p></div>
-    <div><span>03</span><b>Deep learning</b><p>5-channel RGB-guided Residual U-Net learning high-frequency geometry residuals.</p></div>
-    <div><span>04</span><b>Hybrid fusion</b><p>Confidence-adaptive blending giving classical primacy on sharp geometric boundaries.</p></div>
+  <div class="section-head">
+    <div>
+      <div class="eyebrow"><span class="eyebrow-line"></span> PIPELINE ARCHITECTURE</div>
+      <h2>System Architecture & End-to-End Processing</h2>
+      <p>How DepthLab AI combines dual-stream inputs, zero-bleed interpolation, classical structural filtering, and learned residual CNNs.</p>
+    </div>
+    <span class="step-count">ARCHITECTURE</span>
+  </div>
+
+  <!-- Interactive Visual Architecture Flow Diagram -->
+  <div class="arch-diagram-wrap">
+    <div class="arch-stage-card input-stage">
+      <div class="arch-card-tag">INPUT STREAM</div>
+      <b>Dual Sensor Guidance</b>
+      <ul>
+        <li>RGB Guide Image (H × W × 3)</li>
+        <li>Sparse/LR Depth (H/s × W/s × 1)</li>
+        <li>Optional Ground Truth (H × W)</li>
+      </ul>
+    </div>
+
+    <div class="arch-arrow">➔</div>
+
+    <div class="arch-stage-card preprocess-stage">
+      <div class="arch-card-tag">PRE-PROCESSING</div>
+      <b>Zero-Bleed Masking</b>
+      <ul>
+        <li>Boolean Support Mask M</li>
+        <li>Normalized Weight Resize</li>
+        <li>Euclidean Distance Infill</li>
+      </ul>
+    </div>
+
+    <div class="arch-arrow">➔</div>
+
+    <div class="arch-dual-branch">
+      <div class="arch-stage-card branch-classical">
+        <div class="arch-card-tag classical">BRANCH A: CLASSICAL</div>
+        <b>Edge-Aware Solvers</b>
+        <ul>
+          <li>Guided Image Filter</li>
+          <li>Joint Bilateral Filtering</li>
+          <li>Dual-Evidence Discontinuity</li>
+        </ul>
+      </div>
+
+      <div class="arch-branch-join">↕ Adaptive Confidence Gating (w) ↕</div>
+
+      <div class="arch-stage-card branch-deep">
+        <div class="arch-card-tag deep">BRANCH B: DEEP RESIDUAL</div>
+        <b>Compact U-Net (5-Ch)</b>
+        <ul>
+          <li>RGB + Interp Depth + Mask</li>
+          <li>High-Frequency Residuals</li>
+          <li>Planar Surface Regularization</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="arch-arrow">➔</div>
+
+    <div class="arch-stage-card output-stage">
+      <div class="arch-card-tag output">OUTPUT LAB</div>
+      <b>3D Geometry & Audit</b>
+      <ul>
+        <li>Dense Metric Depth (16-bit)</li>
+        <li>Interactive 3D WebGL Mesh</li>
+        <li>Physical Metric Benchmark</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="method-cards" style="margin-top: 24px;">
+    <div><span>01</span><b>Interpolation Baselines</b><p>Masked nearest, bilinear and bicubic baselines preventing invalid sample bleed.</p></div>
+    <div><span>02</span><b>Classical Vision Solvers</b><p>RGB-guided and joint-bilateral filtering using structural co-occurrence and dual edge gating.</p></div>
+    <div><span>03</span><b>Deep Residual Learning</b><p>5-channel RGB-guided Residual U-Net learning high-frequency geometry residuals.</p></div>
+    <div><span>04</span><b>Confidence Hybrid Fusion</b><p>Confidence-adaptive blending giving classical primacy on sharp geometric boundaries.</p></div>
   </div>
 </section>
 
-<footer>
-  <span>◈ DEPTHLAB AI · PROBLEM STATEMENT 04</span>
-  <span>EDGE-PRESERVING DEPTH MAP UPSAMPLING & REFINEMENT</span>
-  <span>CV HACKATHON 2026</span>
+<footer id="exports">
+  <div class="footer-meta">
+    <b>◈ DEPTHLAB AI · PROBLEM STATEMENT 04 (TEAM T04)</b>
+    <span>EDGE-PRESERVING DEPTH MAP UPSAMPLING & REFINEMENT</span>
+    <span>USNs: 1RUA24CSE0243, 1RUA24CSE0263, 1RUA24CSE0270, 1RUA24CSE0308</span>
+  </div>
+  <div class="footer-links">
+    <a href="https://github.com/prajnanraobtech24/DepthLab-AI" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
+    <span>v1.0.0 · CV Hackathon 2026</span>
+  </div>
 </footer>
 </main>
+</div>
+
+<!-- Stepwise Interactive Spotlight Tour Elements (Exact Match to Mockup) -->
+<div id="tourBackdrop" class="tour-backdrop"></div>
+<div id="tourCard" class="tour-card-popup" style="display:none;">
+  <div class="tour-card-header">
+    <div class="tour-header-left">
+      <span class="tour-badge" id="tourStepBadge">STEP 1 OF 8</span>
+      <div class="tour-dots" id="tourDots"></div>
+    </div>
+    <button class="tour-skip-btn" id="tourCloseBtn" title="Exit Guided Tour">✕ Skip</button>
+  </div>
+  <div class="tour-card-body">
+    <h3 id="tourTitle"><span class="tour-title-dot">●</span> <span id="tourTitleText">Step 1: Dataset Explorer</span></h3>
+    <p id="tourDesc">Browse authentic paired scenes across NYU Depth V2, KITTI LiDAR, and Middlebury Stereo. Click any scene to load it in the workspace or inspect ground truth in the lightbox.</p>
+  </div>
+  <div class="tour-card-footer">
+    <button class="tour-btn tour-btn-prev" id="tourPrevBtn">◄ Previous</button>
+    <span class="tour-enter-hint">Enter ↵</span>
+    <button class="tour-btn tour-btn-next" id="tourNextBtn">Next Step →</button>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
