@@ -177,6 +177,32 @@ async function initGallery() {
   }
 }
 
+function syncCategoryPills(category) {
+  currentGalleryCategory = category;
+  document.querySelectorAll('#galleryFilters .filter-pill').forEach(b => {
+    if (b.dataset.category === category) b.classList.add('active');
+    else b.classList.remove('active');
+  });
+}
+
+function resetAllGalleryFilters() {
+  currentGalleryCategory = 'all';
+  currentGalleryQuery = '';
+  currentGalleryResolution = 'all';
+  currentGalleryGt = 'all';
+  currentGallerySort = 'default';
+  currentGalleryPageSize = 'all';
+
+  syncCategoryPills('all');
+  if ($('gallerySearch')) $('gallerySearch').value = '';
+  if ($('galleryResolutionFilter')) $('galleryResolutionFilter').value = 'all';
+  if ($('galleryGtFilter')) $('galleryGtFilter').value = 'all';
+  if ($('gallerySort')) $('gallerySort').value = 'default';
+  if ($('galleryPageSize')) $('galleryPageSize').value = 'all';
+
+  renderGallery();
+}
+
 function setGalleryViewMode(mode) {
   currentGalleryViewMode = mode;
   const grid = $('galleryGrid');
@@ -229,11 +255,28 @@ function renderGallery(filterCategory, query) {
   // 3. Filter by resolution
   if (currentGalleryResolution !== 'all') {
     if (currentGalleryResolution === '640x480') {
-      items = items.filter(item => item.resolution && item.resolution.includes('640'));
+      items = items.filter(item => 
+        item.category === 'indoor' || 
+        (item.dataset && item.dataset.toLowerCase().includes('nyu')) ||
+        (item.resolution && item.resolution.includes('640') && item.resolution.includes('480'))
+      );
     } else if (currentGalleryResolution === '1242x375') {
-      items = items.filter(item => item.resolution && item.resolution.includes('1242'));
+      items = items.filter(item => 
+        item.category === 'outdoor' || 
+        (item.dataset && item.dataset.toLowerCase().includes('kitti')) ||
+        (item.resolution && (
+          item.resolution.includes('1216') || 
+          item.resolution.includes('1242') || 
+          item.resolution.includes('352') || 
+          item.resolution.includes('375')
+        ))
+      );
     } else if (currentGalleryResolution === 'stereo') {
-      items = items.filter(item => item.category === 'stereo' || (item.resolution && !item.resolution.includes('640') && !item.resolution.includes('1242')));
+      items = items.filter(item => 
+        item.category === 'stereo' || 
+        (item.dataset && item.dataset.toLowerCase().includes('middlebury')) ||
+        (item.resolution && item.resolution.includes('360'))
+      );
     }
   }
 
@@ -264,7 +307,19 @@ function renderGallery(filterCategory, query) {
   }
 
   if (items.length === 0) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px;font-family:var(--mono);font-size:13px;">No benchmark scenes match the selected filters. Try choosing "All Datasets" or clearing search.</div>`;
+    grid.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:46px 20px;font-family:var(--mono);font-size:13px;">
+        <div style="font-size: 28px; margin-bottom: 10px;">🔍</div>
+        <p style="margin-bottom: 16px; color: var(--text);">No benchmark scenes match the selected combination of filters.</p>
+        <button id="resetGalleryFiltersBtn" class="pill-btn primary-pill" style="display:inline-flex;align-items:center;gap:6px;padding:9px 20px;font-size:12px;cursor:pointer;border:none;">
+          ↺ Reset All Filters
+        </button>
+      </div>
+    `;
+    const resetBtn = $('resetGalleryFiltersBtn');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', resetAllGalleryFilters);
+    }
     return;
   }
 
@@ -316,7 +371,18 @@ document.querySelectorAll('#galleryFilters .filter-pill').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('#galleryFilters .filter-pill').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    renderGallery(btn.dataset.category);
+    const cat = btn.dataset.category;
+    if (cat === 'indoor' && currentGalleryResolution === '1242x375') {
+      currentGalleryResolution = 'all';
+      if ($('galleryResolutionFilter')) $('galleryResolutionFilter').value = 'all';
+    } else if (cat === 'outdoor' && currentGalleryResolution === '640x480') {
+      currentGalleryResolution = 'all';
+      if ($('galleryResolutionFilter')) $('galleryResolutionFilter').value = 'all';
+    } else if (cat === 'stereo' && (currentGalleryResolution === '640x480' || currentGalleryResolution === '1242x375')) {
+      currentGalleryResolution = 'all';
+      if ($('galleryResolutionFilter')) $('galleryResolutionFilter').value = 'all';
+    }
+    renderGallery(cat);
   });
 });
 
@@ -332,6 +398,14 @@ if (gallerySearchInput) {
 if ($('galleryResolutionFilter')) {
   $('galleryResolutionFilter').addEventListener('change', e => {
     currentGalleryResolution = e.target.value;
+    // Auto-resolve any category conflict so user never gets an unexpected empty view
+    if (currentGalleryResolution === '1242x375' && currentGalleryCategory === 'indoor') {
+      syncCategoryPills('all');
+    } else if (currentGalleryResolution === '640x480' && currentGalleryCategory === 'outdoor') {
+      syncCategoryPills('all');
+    } else if (currentGalleryResolution === 'stereo' && (currentGalleryCategory === 'indoor' || currentGalleryCategory === 'outdoor')) {
+      syncCategoryPills('all');
+    }
     renderGallery();
   });
 }
