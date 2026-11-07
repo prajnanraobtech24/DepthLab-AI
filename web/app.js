@@ -154,8 +154,15 @@ $('presetMid').addEventListener('click', () => {
   });
 });
 
-// 24-Scene Interactive Benchmark Gallery Logic
+// 50-Scene Interactive Benchmark Gallery Logic & Filtering Toolbar
 let galleryData = [];
+let currentGalleryCategory = 'all';
+let currentGalleryQuery = '';
+let currentGalleryResolution = 'all';
+let currentGalleryGt = 'all';
+let currentGallerySort = 'default';
+let currentGalleryPageSize = 'all';
+let currentGalleryViewMode = '3col'; // Default: 3 in a row for high-detail, spacious cards
 
 async function initGallery() {
   const grid = $('galleryGrid');
@@ -170,8 +177,25 @@ async function initGallery() {
   }
 }
 
-let currentGalleryCategory = 'all';
-let currentGalleryQuery = '';
+function setGalleryViewMode(mode) {
+  currentGalleryViewMode = mode;
+  const grid = $('galleryGrid');
+  if (!grid) return;
+
+  grid.classList.remove('cols-3', 'cols-4', 'cols-list');
+  if (mode === '4col') grid.classList.add('cols-4');
+  else if (mode === 'list') grid.classList.add('cols-list');
+  else grid.classList.add('cols-3');
+
+  ['viewMode3Col', 'viewMode4Col', 'viewModeList'].forEach(id => {
+    const btn = $(id);
+    if (btn) btn.classList.remove('active');
+  });
+
+  if (mode === '4col' && $('viewMode4Col')) $('viewMode4Col').classList.add('active');
+  else if (mode === 'list' && $('viewModeList')) $('viewModeList').classList.add('active');
+  else if ($('viewMode3Col')) $('viewMode3Col').classList.add('active');
+}
 
 function renderGallery(filterCategory, query) {
   if (filterCategory !== undefined) currentGalleryCategory = filterCategory;
@@ -181,10 +205,18 @@ function renderGallery(filterCategory, query) {
   if (!grid) return;
   grid.innerHTML = '';
   
+  // Set layout view mode class
+  grid.classList.remove('cols-3', 'cols-4', 'cols-list');
+  if (currentGalleryViewMode === '4col') grid.classList.add('cols-4');
+  else if (currentGalleryViewMode === 'list') grid.classList.add('cols-list');
+  else grid.classList.add('cols-3');
+
+  // 1. Filter by category
   let items = currentGalleryCategory === 'all' 
-    ? galleryData 
+    ? [...galleryData] 
     : galleryData.filter(item => item.category === currentGalleryCategory);
 
+  // 2. Filter by search query
   if (currentGalleryQuery) {
     items = items.filter(item => 
       (item.title && item.title.toLowerCase().includes(currentGalleryQuery)) ||
@@ -194,8 +226,45 @@ function renderGallery(filterCategory, query) {
     );
   }
 
+  // 3. Filter by resolution
+  if (currentGalleryResolution !== 'all') {
+    if (currentGalleryResolution === '640x480') {
+      items = items.filter(item => item.resolution && item.resolution.includes('640'));
+    } else if (currentGalleryResolution === '1242x375') {
+      items = items.filter(item => item.resolution && item.resolution.includes('1242'));
+    } else if (currentGalleryResolution === 'stereo') {
+      items = items.filter(item => item.category === 'stereo' || (item.resolution && !item.resolution.includes('640') && !item.resolution.includes('1242')));
+    }
+  }
+
+  // 4. Filter by Ground Truth
+  if (currentGalleryGt !== 'all') {
+    if (currentGalleryGt === 'with_gt') {
+      items = items.filter(item => !!item.gtUrl);
+    } else if (currentGalleryGt === 'unseen') {
+      items = items.filter(item => !item.gtUrl);
+    }
+  }
+
+  // 5. Sort items
+  if (currentGallerySort === 'name_asc') {
+    items.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+  } else if (currentGallerySort === 'range_asc') {
+    items.sort((a, b) => parseFloat(a.range || '0') - parseFloat(b.range || '0'));
+  } else if (currentGallerySort === 'dataset') {
+    items.sort((a, b) => (a.dataset || '').localeCompare(b.dataset || ''));
+  }
+
+  // 6. Page Size limit
+  if (currentGalleryPageSize !== 'all') {
+    const limit = parseInt(currentGalleryPageSize, 10);
+    if (!isNaN(limit) && limit > 0) {
+      items = items.slice(0, limit);
+    }
+  }
+
   if (items.length === 0) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:36px;font-family:var(--mono);font-size:11px;">No benchmark scenes match "${currentGalleryQuery}". Try clearing search or choosing another dataset.</div>`;
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px;font-family:var(--mono);font-size:13px;">No benchmark scenes match the selected filters. Try choosing "All Datasets" or clearing search.</div>`;
     return;
   }
 
@@ -258,6 +327,40 @@ if (gallerySearchInput) {
     renderGallery(undefined, e.target.value);
   });
 }
+
+// Wire Sub-Toolbar Dropdowns (Resolution, Ground Truth, Sort, Show/Page)
+if ($('galleryResolutionFilter')) {
+  $('galleryResolutionFilter').addEventListener('change', e => {
+    currentGalleryResolution = e.target.value;
+    renderGallery();
+  });
+}
+
+if ($('galleryGtFilter')) {
+  $('galleryGtFilter').addEventListener('change', e => {
+    currentGalleryGt = e.target.value;
+    renderGallery();
+  });
+}
+
+if ($('gallerySort')) {
+  $('gallerySort').addEventListener('change', e => {
+    currentGallerySort = e.target.value;
+    renderGallery();
+  });
+}
+
+if ($('galleryPageSize')) {
+  $('galleryPageSize').addEventListener('change', e => {
+    currentGalleryPageSize = e.target.value;
+    renderGallery();
+  });
+}
+
+// Wire View Mode Switcher Buttons (3 in row, 4 in row, List)
+if ($('viewMode3Col')) $('viewMode3Col').addEventListener('click', () => setGalleryViewMode('3col'));
+if ($('viewMode4Col')) $('viewMode4Col').addEventListener('click', () => setGalleryViewMode('4col'));
+if ($('viewModeList')) $('viewModeList').addEventListener('click', () => setGalleryViewMode('list'));
 
 // Hero showcase specimen click
 const heroShowcase = $('heroShowcase');

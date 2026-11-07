@@ -327,6 +327,93 @@
     </div>
   </div>
 
+  <!-- Interactive Gallery Sub-Toolbar (Resolution, Ground Truth, Sort, Show/Page, View Modes) -->
+  <div class="gallery-sub-toolbar">
+    <div class="sub-toolbar-filters">
+      <div class="toolbar-dropdown-group">
+        <label for="galleryResolutionFilter">Resolution:</label>
+        <div class="sub-select-wrap">
+          <select id="galleryResolutionFilter">
+            <option value="all" selected>All Resolutions</option>
+            <option value="640x480">640 × 480 px (Kinect)</option>
+            <option value="1242x375">1242 × 375 px (LiDAR)</option>
+            <option value="stereo">High-Res Stereo</option>
+          </select>
+          <span>⌄</span>
+        </div>
+      </div>
+
+      <div class="toolbar-dropdown-group">
+        <label for="galleryGtFilter">Ground Truth:</label>
+        <div class="sub-select-wrap">
+          <select id="galleryGtFilter">
+            <option value="all" selected>All Scenes</option>
+            <option value="with_gt">With Ground Truth</option>
+            <option value="unseen">Real Sensor Only</option>
+          </select>
+          <span>⌄</span>
+        </div>
+      </div>
+
+      <div class="toolbar-dropdown-group">
+        <label for="gallerySort">Sort:</label>
+        <div class="sub-select-wrap">
+          <select id="gallerySort">
+            <option value="default" selected>Default (Featured First)</option>
+            <option value="name_asc">Scene Name (A — Z)</option>
+            <option value="range_asc">Range (Short to Long)</option>
+            <option value="dataset">Sensor Modality</option>
+          </select>
+          <span>⌄</span>
+        </div>
+      </div>
+
+      <div class="toolbar-dropdown-group">
+        <label for="galleryPageSize">Show:</label>
+        <div class="sub-select-wrap">
+          <select id="galleryPageSize">
+            <option value="9">9 / page</option>
+            <option value="12">12 / page</option>
+            <option value="24">24 / page</option>
+            <option value="all" selected>All (50 scenes)</option>
+          </select>
+          <span>⌄</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="gallery-view-modes">
+      <button class="view-mode-btn active" id="viewMode3Col" title="3 in a row (Large cards)">
+        <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+          <rect x="1" y="1" width="3.5" height="3.5" rx="0.8"/>
+          <rect x="6.25" y="1" width="3.5" height="3.5" rx="0.8"/>
+          <rect x="11.5" y="1" width="3.5" height="3.5" rx="0.8"/>
+          <rect x="1" y="6.25" width="3.5" height="3.5" rx="0.8"/>
+          <rect x="6.25" y="6.25" width="3.5" height="3.5" rx="0.8"/>
+          <rect x="11.5" y="6.25" width="3.5" height="3.5" rx="0.8"/>
+          <rect x="1" y="11.5" width="3.5" height="3.5" rx="0.8"/>
+          <rect x="6.25" y="11.5" width="3.5" height="3.5" rx="0.8"/>
+          <rect x="11.5" y="11.5" width="3.5" height="3.5" rx="0.8"/>
+        </svg>
+      </button>
+      <button class="view-mode-btn" id="viewMode4Col" title="4 in a row (Compact grid)">
+        <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+          <rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1"/>
+          <rect x="9" y="1.5" width="5.5" height="5.5" rx="1"/>
+          <rect x="1.5" y="9" width="5.5" height="5.5" rx="1"/>
+          <rect x="9" y="9" width="5.5" height="5.5" rx="1"/>
+        </svg>
+      </button>
+      <button class="view-mode-btn" id="viewModeList" title="List View">
+        <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+          <rect x="1.5" y="2" width="13" height="3" rx="1"/>
+          <rect x="1.5" y="6.5" width="13" height="3" rx="1"/>
+          <rect x="1.5" y="11" width="13" height="3" rx="1"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
   <div class="gallery-grid" id="galleryGrid">
     <!-- Populated dynamically from /assets/presets/gallery_manifest.json with 50 rich cards -->
   </div>
