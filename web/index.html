@@ -13,7 +13,7 @@
 <div class="shell">
 <aside class="sidebar">
   <div class="sidebar-header-row">
-    <a class="brand" href="/"><span class="brand-mark">◈</span><span>depthlab<span class="brand-ai">.ai</span><small>PHASE 4 DEPTH REFINEMENT</small></span></a>
+    <a class="brand" href="/"><span class="brand-mark">◈</span><span>depthlab<span class="brand-ai">.ai</span><small>DEPTH MAP REFINEMENT</small></span></a>
     <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close navigation">✕</button>
   </div>
   
@@ -71,7 +71,7 @@
 <header class="topbar">
   <div class="topbar-left">
     <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Navigation Menu">☰</button>
-    <div class="crumb">WORKSPACE <span>/</span> PROBID-P4 <span>/</span> EDGE RECONSTRUCTION</div>
+    <div class="crumb">WORKSPACE <span>/</span> EDGE-AWARE DEPTH RECONSTRUCTION</div>
   </div>
   <div class="top-right">
     <button class="theme-toggle-btn" id="themeToggleBtn" title="Toggle Light / Dark Mode">
@@ -86,15 +86,14 @@
       <span>Start Guided Tour</span>
     </button>
     <span class="live-pill"><i></i> SYSTEM LIVE</span>
-    <span class="avatar">P4</span>
+    <span class="avatar">DL</span>
   </div>
 </header>
 
 <section class="hero-overview-section" id="overview">
   <div class="hero-badge-strip">
     <span class="hero-chip-pill"><span class="chip-dot">●</span> Computer Vision Research Platform</span>
-    <span class="hero-chip-pill meta">P4: Depth Upsampling & Refinement</span>
-    <span class="hero-chip-pill meta">1,308,610 Trainable Parameters</span>
+    <span class="hero-chip-pill meta">Depth Upsampling & Refinement</span>
   </div>
 
   <div class="hero-two-col">
@@ -247,7 +246,7 @@
       <div class="tour-num">01</div>
       <div class="tour-icon">⌂</div>
       <b>Platform Overview & Hero</b>
-      <p>Problem statement P4, dual-branch CNN & confidence solver cards, and live boundary preview.</p>
+      <p>Dual-branch CNN & confidence solver cards, and live boundary preview.</p>
       <div class="tour-action">Focus Overview ↗</div>
     </div>
 
@@ -437,7 +436,7 @@
   <div class="panel config-panel"><div class="panel-head"><div><span class="panel-index">B</span><b>Reconstruction settings</b></div><span class="required">CUSTOMIZE</span></div>
     <label>DATASET / DEPTH RANGE</label><div class="select-wrap"><select id="depthProfile"><option>NYU indoor · 10 m</option><option>KITTI outdoor · 80 m</option></select><span>⌄</span></div>
     <label>DEPTH FILE UNIT</label><div class="select-wrap"><select id="depthUnits"><option value="metres">Metres (m)</option><option value="millimetres">Millimetres (mm)</option><option value="kitti_256">KITTI uint16 (1/256 m)</option></select><span>⌄</span></div>
-    <label>UPSAMPLING FACTOR (P4 MULTI-SCALE)</label><div class="segmented" id="scaleChoices"><button data-value="2">2× Upsampling</button><button class="selected" data-value="4">4× (Standard)</button><button data-value="8">8× (Stress Test)</button></div>
+    <label>UPSAMPLING FACTOR (MULTI-SCALE)</label><div class="segmented" id="scaleChoices"><button data-value="2">2× Upsampling</button><button class="selected" data-value="4">4× (Standard)</button><button data-value="8">8× (Stress Test)</button></div>
     <label>RECONSTRUCTION PIPELINE</label><div class="select-wrap"><select id="mode"><option>Hybrid</option><option>Interpolation</option><option>KNN</option><option>Classical</option><option>Deep learning</option></select><span>⌄</span></div>
     <label>DEPTH INPUT TYPE</label><div class="select-wrap"><select id="depthInputType"><option value="auto">Auto-detect by dimensions</option><option value="low_resolution">Low-resolution depth</option><option value="full_resolution_sparse">Full-resolution sparse depth</option></select><span>⌄</span></div>
     <label>INTERPOLATION BASELINE</label><div class="select-wrap"><select id="interpolation"><option value="bilinear">Bilinear</option><option value="nearest">Nearest neighbour</option><option value="bicubic">Bicubic</option></select><span>⌄</span></div>
