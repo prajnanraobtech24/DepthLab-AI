@@ -125,76 +125,80 @@ $$\mathbf{D}_{\text{final}}(p) = \begin{cases} \mathbf{D}_{\text{in}}(p), & \tex
 
 ## 3. System Architecture & End-to-End Pipeline
 
+![DepthLab AI System Architecture](assets/system_architecture.png)
+
+*Interactive FigJam Architecture Board:* [DepthLab AI - System Architecture on FigJam](https://www.figma.com/board/RWWzVX9Fie6uvLxEGQ2yyU)
+
 ```mermaid
 flowchart TD
     subgraph UI ["Client Presentation Layer (Browser)"]
-        A[RGB Image: PNG / JPG] -->|Drag & Drop| UPLOAD
-        B[Depth Map: PNG / TIFF / NPY] -->|Drag & Drop| UPLOAD
-        C[Ground Truth: Optional] -->|Drag & Drop| UPLOAD
-        SETTINGS[Scale: 2x/4x/8x | Filter: Guided/JBF | Mode: Hybrid | Alpha Slider]
-        UPLOAD --> API_REQ[HTTP POST /api/reconstruct multipart/form-data]
+        A["RGB Image: PNG / JPG"] -->|"Drag & Drop"| UPLOAD["Input Dropzones"]
+        B["Depth Map: PNG / TIFF / NPY"] -->|"Drag & Drop"| UPLOAD
+        C["Ground Truth: Optional"] -->|"Drag & Drop"| UPLOAD
+        SETTINGS["Controls: Scale (2x, 4x, 8x), Filters, Mode, Alpha Slider"]
+        UPLOAD --> API_REQ["HTTP POST /api/reconstruct"]
         SETTINGS --> API_REQ
     end
 
     subgraph FASTAPI ["Backend Validation & Dispatch (server.py)"]
-        API_REQ --> VAL{Dimension & Range Validation}
-        VAL -->|Fail| ERR[HTTP 400 Bad Request]
-        VAL -->|Pass| DEC[Decode to float32 NumPy arrays in Metres]
+        API_REQ --> VAL{"Dimension & Range Validation"}
+        VAL -->|"Fail"| ERR["HTTP 400 Bad Request"]
+        VAL -->|"Pass"| DEC["Decode to float32 NumPy arrays in Metres"]
     end
 
     subgraph PIPELINE ["DepthLab AI Core Engine (src/pipeline.py)"]
-        DEC --> VMSK[Extract Boolean Validity Mask M]
-        VMSK --> INTERP[Zero-Bleed Normalized Interpolation]
+        DEC --> VMSK["Extract Boolean Validity Mask M"]
+        VMSK --> INTERP["Zero-Bleed Normalized Interpolation"]
         
         subgraph BRANCH_A ["Stage 1: Baselines"]
-            INTERP --> BASE_NEAREST[Nearest Neighbour]
-            INTERP --> BASE_BILIN[Bilinear Interpolation]
-            INTERP --> BASE_BICUB[Bicubic Spline]
+            INTERP --> BASE_NEAREST["Nearest Neighbour"]
+            INTERP --> BASE_BILIN["Bilinear Interpolation"]
+            INTERP --> BASE_BICUB["Bicubic Spline"]
         end
 
         subgraph BRANCH_B ["Stage 2: Spatial Clustering"]
-            VMSK --> KNN[RGB-Aware Local KD-Tree KNN]
+            VMSK --> KNN["RGB-Aware Local KD-Tree KNN"]
         end
 
         subgraph BRANCH_C ["Stage 3: Classical Structural Filtering"]
-            INTERP --> HOLE[Morphological Hole Inpainting]
-            HOLE --> FLT{Selected Filter}
-            FLT -->|Guided| GF[RGB Guided Filter]
-            FLT -->|Joint Bilateral| JBF[RGB Joint Bilateral Filter]
+            INTERP --> HOLE["Morphological Hole Inpainting"]
+            HOLE --> FLT{"Selected Filter"}
+            FLT -->|"Guided"| GF["RGB Guided Filter"]
+            FLT -->|"Joint Bilateral"| JBF["RGB Joint Bilateral Filter"]
         end
 
         subgraph BRANCH_D ["Stage 4: Deep Learning (src/model.py)"]
-            INTERP --> TENS[Construct 5-Channel Input: RGB + Interp_Depth + Mask]
-            TENS --> UNET[Compact Residual CNN U-Net 489k params]
-            UNET --> DL_OUT[Learned High-Frequency Residual Depth]
+            INTERP --> TENS["Construct 5-Channel Input: RGB + Depth + Mask"]
+            TENS --> UNET["Compact Residual CNN U-Net (489k params)"]
+            UNET --> DL_OUT["Learned High-Frequency Residual Depth"]
         end
 
         subgraph FUSION ["Stage 5 & 6: Dual-Evidence Gating & Fusion"]
-            HOLE --> SOBEL[Depth Sobel Gradient Operator]
-            SOBEL --> CONF[Spatial Confidence Map C_p]
-            GF --> FUSE[Confidence-Adaptive Blending]
+            HOLE --> SOBEL["Depth Sobel Gradient Operator"]
+            SOBEL --> CONF["Spatial Confidence Map C(p)"]
+            GF --> FUSE["Confidence-Adaptive Blending"]
             JBF --> FUSE
             DL_OUT --> FUSE
             CONF --> FUSE
-            FUSE --> RESTORE[Observation Preservation Masking]
+            FUSE --> RESTORE["Observation Preservation Masking"]
         end
 
         subgraph EVAL ["Stage 7: Quantitative Evaluation (src/metrics.py)"]
-            RESTORE --> METRICS[Compute RMSE, MAE, PSNR, SSIM, Edge F1, Boundary F1]
+            RESTORE --> METRICS["Compute RMSE, MAE, PSNR, SSIM, Edge F1, Boundary F1"]
             C --> METRICS
         end
     end
 
     subgraph EXPORT ["Output Visualizations & Research Artifacts"]
-        RESTORE --> VIS[Turbo / Viridis / Inferno Colormap Encoders]
-        VIS --> JSON_RESP[JSON Response with Base64 Previews, Metrics, Latency]
-        JSON_RESP --> CARDS[2D 7-Stage Multi-Model Ablation Grid]
-        JSON_RESP --> TRIVIEW[Executive Tri-View Comparison]
-        JSON_RESP --> SLIDER[Interactive Split-Comparison Slider]
-        JSON_RESP --> THREE[Three.js 3D Interactive Point Cloud / Mesh]
-        JSON_RESP --> DL_NPY[Export Lossless float32 .npy]
-        JSON_RESP --> DL_PNG[Export Calibrated 16-bit uint16 .png]
-        JSON_RESP --> DL_AUDIT[Export JSON Audit Benchmark Report]
+        RESTORE --> VIS["Turbo / Viridis / Inferno Colormap Encoders"]
+        VIS --> JSON_RESP["JSON Response (Base64 Previews, Metrics, Latency)"]
+        JSON_RESP --> CARDS["2D 7-Stage Multi-Model Ablation Grid"]
+        JSON_RESP --> TRIVIEW["Executive Tri-View Comparison"]
+        JSON_RESP --> SLIDER["Interactive Split-Comparison Slider"]
+        JSON_RESP --> THREE["Three.js 3D Interactive Point Cloud / Mesh"]
+        JSON_RESP --> DL_NPY["Export Lossless float32 .npy"]
+        JSON_RESP --> DL_PNG["Export Calibrated 16-bit uint16 .png"]
+        JSON_RESP --> DL_AUDIT["Export JSON Audit Benchmark Report"]
     end
 ```
 
