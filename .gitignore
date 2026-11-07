@@ -13,3 +13,4 @@ checkpoints/**
 results/**
 *.pt
 *.pth
+my_custom_uploads/
